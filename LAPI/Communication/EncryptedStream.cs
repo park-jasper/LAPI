@@ -8,7 +8,7 @@ using LAPI.Model;
 
 namespace LAPI.Communication
 {
-    public class EncryptedStream : IStream
+    public class EncryptedStream : IStream, IDisposable
     {
         private readonly ICryptographicService _service;
         private readonly IStream _stream;
@@ -85,6 +85,11 @@ namespace LAPI.Communication
             {
                 throw result.Exception;
             }
+        }
+
+        public void Dispose()
+        {
+            _stream?.Dispose();
         }
     }
 }

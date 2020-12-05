@@ -35,9 +35,7 @@ namespace LAPI.Communication
             {
                 return CommunicationResult.Failed;
             }
-            Task
-                .Delay(TimeSpan.FromSeconds(5))
-                .ContinueWith(_ => timeoutCancellationTokenSource.Cancel(), token);
+            timeoutCancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(5));
             token = timeoutCancellationTokenSource.Token;
             if (!await GetAndVerifyPresharedKey(clientStream, presharedKey, token))
             {
