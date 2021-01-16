@@ -16,7 +16,7 @@ namespace LAPI.Test.Extensions.IStreamExtensions.WorkingStreams
         {
             await base.When();
             await DoParallel(
-                async () => WriteResult = await Client.WriteSafelyAsync(new byte[] { 1, 2, 3, 4 }, Token),
+                async () => WriteResult = await Client.WriteSafelyAsync(Token, new byte[] { 1, 2, 3, 4 }),
                 async () => ReadResult = await Server.ReadSafelyAsync(4, Token)
             );
         }

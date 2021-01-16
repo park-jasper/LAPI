@@ -9,8 +9,8 @@ namespace LAPI.Test.Mocks
     public class IStreamMock : IStream
     {
         private IStreamMock _partner;
-        private readonly Queue<byte[]> _currentBufferQueue = new Queue<byte[]>();
-        private readonly Queue<byte[]> _currentRequestBufferQueue = new Queue<byte[]>();
+        private readonly Deque<byte[]> _currentBufferQueue = new Deque<byte[]>();
+        private readonly Deque<byte[]> _currentRequestBufferQueue = new Deque<byte[]>();
         private TaskCompletionSource<int> _currentTaskSource { get; set; }
 
         private readonly object _completionLock = new object();
@@ -40,8 +40,14 @@ namespace LAPI.Test.Mocks
                 if (_currentBufferQueue.Count != 0)
                 {
                     var availableBuffer = _currentBufferQueue.Dequeue();
-                    var minLength = Math.Min(Math.Min(count, buffer.Length), availableBuffer.Length);
+                    var minLength = Math.Min(count, availableBuffer.Length);
                     Array.Copy(availableBuffer, buffer, minLength);
+                    if (minLength < availableBuffer.Length)
+                    {
+                        var reinsert = new byte[availableBuffer.Length - minLength];
+                        Array.Copy(availableBuffer, minLength, reinsert, 0, reinsert.Length);
+                        _currentBufferQueue.PushFront(reinsert);
+                    }
                     return Task.FromResult(minLength);
                 }
                 else
@@ -86,6 +92,11 @@ namespace LAPI.Test.Mocks
         {
             left._partner = right;
             right._partner = left;
+        }
+
+        public void Dispose()
+        {
+
         }
     }
 }

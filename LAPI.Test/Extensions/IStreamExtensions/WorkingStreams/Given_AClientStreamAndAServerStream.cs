@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace LAPI.Test.Extensions.IStreamExtensions.WorkingStreams
 {
     [TestClass]
-    public class Given_AClientStreamAndAServerStream : IStreamExtensionsBase
+    public class Given_AClientStreamAndAServerStream : IStreamTestBase
     {
         public override async Task Given()
         {

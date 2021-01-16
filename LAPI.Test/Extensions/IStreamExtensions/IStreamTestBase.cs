@@ -3,7 +3,7 @@ using LAPI.Contracts;
 
 namespace LAPI.Test.Extensions.IStreamExtensions
 {
-    public abstract class IStreamExtensionsBase : TestSpecsAsync
+    public abstract class IStreamTestBase : TestSpecsAsync
     {
         protected IStream Server;
         protected IStream Client;

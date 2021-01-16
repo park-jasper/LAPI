@@ -1,10 +1,11 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using LAPI.Contracts;
 
 namespace LAPI.Test.Extensions.IStreamExtensions.MalfunctioningStreams
 {
-    public class Given_AClientStreamThatThrowsAnException : IStreamExtensionsBase
+    public class Given_AClientStreamThatThrowsAnException : IStreamTestBase
     {
         public override async Task Given()
         {
@@ -16,12 +17,17 @@ namespace LAPI.Test.Extensions.IStreamExtensions.MalfunctioningStreams
         {
             public Task<int> ReadAsync(byte[] buffer, int count, CancellationToken token)
             {
-                throw new System.NotImplementedException();
+                throw new NotImplementedException();
             }
 
             public Task WriteAsync(byte[] buffer, int count, CancellationToken token)
             {
-                throw new System.NotImplementedException();
+                throw new NotImplementedException();
+            }
+
+            public void Dispose()
+            {
+                throw new NotImplementedException();
             }
         }
     }

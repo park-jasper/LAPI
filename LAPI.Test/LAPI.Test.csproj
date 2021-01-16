@@ -66,6 +66,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.IdentityModel" />
     <Reference Include="System.IO, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
       <Private>True</Private>
@@ -104,6 +105,10 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceModel.Primitives, Version=4.8.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ServiceModel.Primitives.4.8.0\lib\net461\System.ServiceModel.Primitives.dll</HintPath>
+    </Reference>
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
     </Reference>
@@ -111,14 +116,18 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Communication\EncryptedStream\Given_EncryptedStreams.cs" />
+    <Compile Include="Communication\EncryptedStream\When_TheClientSendsBytes.cs" />
     <Compile Include="Extensions\IStreamExtensions\MalfunctioningStreams\When_TheClientReadsSafely.cs" />
     <Compile Include="Extensions\IStreamExtensions\WorkingStreams\Given_AClientStreamAndAServerStream.cs" />
     <Compile Include="Extensions\IStreamExtensions\MalfunctioningStreams\Given_AClientStreamThatThrowsAnException.cs" />
-    <Compile Include="Extensions\IStreamExtensions\IStreamExtensionsBase.cs" />
+    <Compile Include="Extensions\IStreamExtensions\IStreamTestBase.cs" />
     <Compile Include="Extensions\IStreamExtensions\WorkingStreams\When_TheClientWritesBytes.cs" />
     <Compile Include="Extensions\IStreamExtensions\WorkingStreams\When_TheClientWritesBytesSafely.cs" />
     <Compile Include="Extensions\IStreamExtensions\MalfunctioningStreams\When_TheClientWritesSafely.cs" />
     <Compile Include="GivenWhenThen.cs" />
+    <Compile Include="Mocks\Deque.cs" />
+    <Compile Include="Mocks\ICryptographicServiceMock.cs" />
     <Compile Include="Mocks\IStreamMock.cs" />
     <Compile Include="Model\Cryptography\Given_AnAesCryptographicServiceWithValidKey.cs" />
     <Compile Include="Model\Cryptography\Given_AnRsaCryptographicServiceWithAValidKeyPair.cs" />

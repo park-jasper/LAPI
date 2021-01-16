@@ -142,6 +142,7 @@ namespace LAPI
             await client.SendAsync(presharedKey, presharedKey.Length, broadcastEndpoint);
 
             client.EnableBroadcast = false;
+            client.Client.ReceiveTimeout = timeoutInMilliseconds;
             var timeoutSource = new CancellationTokenSource();
             timeoutSource.CancelAfter(TimeSpan.FromMilliseconds(timeoutInMilliseconds));
 

@@ -13,7 +13,7 @@ namespace LAPI.Test.Extensions.IStreamExtensions.MalfunctioningStreams
         public override async Task When()
         {
             await base.When();
-            WriteResult = await Client.WriteSafelyAsync(new byte[] { 1, 2, 3, 4 }, Token);
+            WriteResult = await Client.WriteSafelyAsync(Token, new byte[] { 1, 2, 3, 4 });
         }
 
         [TestMethod]
