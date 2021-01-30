@@ -19,12 +19,14 @@ namespace LAPI.Test.Model.Cryptography
         }
 
         [TestMethod]
+        [Ignore]
         public void Then_TheDecryptedContentShouldNotBeEmpty()
         {
             _decryptedContent.Should().NotBeEmpty();
         }
 
         [TestMethod]
+        [Ignore]
         public void Then_TheOriginalContentAndTheDecryptedContentContainTheSameValues()
         {
             _decryptedContent.Should().BeEquivalentTo(_content);

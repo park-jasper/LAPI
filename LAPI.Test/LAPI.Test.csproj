@@ -117,15 +117,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Communication\EncryptedStream\Given_EncryptedStreams.cs" />
+    <Compile Include="Communication\EncryptedStream\StreamTestBase.cs" />
     <Compile Include="Communication\EncryptedStream\When_TheClientSendsBytes.cs" />
-    <Compile Include="Extensions\IStreamExtensions\MalfunctioningStreams\When_TheClientReadsSafely.cs" />
-    <Compile Include="Extensions\IStreamExtensions\WorkingStreams\Given_AClientStreamAndAServerStream.cs" />
-    <Compile Include="Extensions\IStreamExtensions\MalfunctioningStreams\Given_AClientStreamThatThrowsAnException.cs" />
-    <Compile Include="Extensions\IStreamExtensions\IStreamTestBase.cs" />
-    <Compile Include="Extensions\IStreamExtensions\WorkingStreams\When_TheClientWritesBytes.cs" />
-    <Compile Include="Extensions\IStreamExtensions\WorkingStreams\When_TheClientWritesBytesSafely.cs" />
-    <Compile Include="Extensions\IStreamExtensions\MalfunctioningStreams\When_TheClientWritesSafely.cs" />
+    <Compile Include="Extensions\IStreamExtensions\CommunicationResultTestBase.cs" />
+    <Compile Include="Extensions\IStreamExtensions\Given\AClientStreamAndAServerStream.cs" />
+    <Compile Include="Extensions\IStreamExtensions\Given\AClientStreamThatThrowsAnException.cs" />
+    <Compile Include="Extensions\IStreamExtensions\StreamExtensionTests.cs" />
+    <Compile Include="Extensions\IStreamExtensions\Then\TheReceivedDataIs.cs" />
+    <Compile Include="Extensions\IStreamExtensions\Then\TheResultIsNotSuccessful.cs" />
+    <Compile Include="Extensions\IStreamExtensions\Then\TheResultIsSuccessful.cs" />
+    <Compile Include="Extensions\IStreamExtensions\When\DataIsSentAndReceived.cs" />
+    <Compile Include="Extensions\IStreamExtensions\When\TheClientReadsSafely.cs" />
+    <Compile Include="Extensions\IStreamExtensions\When\TheClientReceivesAByteSafelyAsync.cs" />
+    <Compile Include="Extensions\IStreamExtensions\When\TheClientWritesSafely.cs" />
     <Compile Include="GivenWhenThen.cs" />
+    <Compile Include="GivenWhenThenGeneric.cs" />
     <Compile Include="Mocks\Deque.cs" />
     <Compile Include="Mocks\ICryptographicServiceMock.cs" />
     <Compile Include="Mocks\IStreamMock.cs" />

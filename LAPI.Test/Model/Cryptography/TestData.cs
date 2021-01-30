@@ -8,8 +8,7 @@ namespace LAPI.Test.Model.Cryptography
 {
     public static class TestData
     {
-        private static readonly byte[] TestSymmetricKeySource = new byte[]
-        {
+        private static readonly byte[] TestSymmetricKeySource = {
             198, 25, 200, 166, 108, 139, 182, 103,
             55, 220, 61, 190, 228, 152, 251, 111,
             195, 59, 184, 185, 184, 119, 111, 72,
@@ -17,9 +16,8 @@ namespace LAPI.Test.Model.Cryptography
         };
         public static SymmetricKey TestSymmetricKey  { get; } = SymmetricKey.FromBuffer(TestSymmetricKeySource);
 
-        #region RsaByteArrayData
-        private static readonly byte[] TestModulus = new byte[]
-        {
+
+        private static readonly byte[] TestModulus = {
             231, 19, 162, 93, 59, 9, 5, 209, 42, 54, 222, 216, 33, 163, 124, 116, 147, 210, 104, 164, 24, 240, 72, 32, 
             90, 71, 246, 55, 123, 141, 115, 38, 240, 95, 197, 253, 190, 243, 181, 1, 146, 253, 237, 183, 97, 186, 235, 
             179, 213, 11, 197, 17, 243, 196, 210, 186, 110, 74, 52, 184, 201, 217, 207, 173, 198, 14, 108, 36, 33, 71, 
@@ -45,8 +43,7 @@ namespace LAPI.Test.Model.Cryptography
             247, 181, 248, 92, 157
         };
 
-        private static readonly byte[] TestPrivateExponent = new byte[]
-        {
+        private static readonly byte[] TestPrivateExponent = {
             129, 230, 173, 189, 207, 116, 49, 10, 246, 186, 69, 232, 38, 112, 235, 131, 245, 157, 177, 41, 158, 195, 
             101, 40, 154, 216, 29, 119, 239, 67, 3, 90, 254, 130, 56, 161, 126, 249, 45, 230, 38, 166, 13, 62, 171, 
             248, 18, 140, 211, 213, 124, 1, 173, 146, 22, 12, 171, 247, 151, 79, 210, 89, 89, 192, 140, 184, 138, 222, 
@@ -72,8 +69,7 @@ namespace LAPI.Test.Model.Cryptography
             104, 189, 172, 18, 91, 74, 222, 223, 126, 218, 209, 217
         };
 
-        private static readonly byte[] TestPublicExponent = new byte[] { 1, 0, 1 };
-        #endregion
+        private static readonly byte[] TestPublicExponent = { 1, 0, 1 };
 
         public static RsaPrivateKey TestAsymmetricPrivateKey { get; } = new RsaPrivateKey(TestModulus, TestPrivateExponent);
         public static RsaPublicKey TestAsymmetricPublicKey { get; } = new RsaPublicKey(TestModulus, TestPublicExponent);

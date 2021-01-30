@@ -3,14 +3,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using LAPI.Contracts;
 
-namespace LAPI.Test.Extensions.IStreamExtensions.MalfunctioningStreams
+namespace LAPI.Test.Extensions.IStreamExtensions.Given
 {
-    public class Given_AClientStreamThatThrowsAnException : IStreamTestBase
+    public class AClientStreamThatThrowsAnException : IGiven<IClientTestBase>
     {
-        public override async Task Given()
+        public void Given(IClientTestBase tbase)
         {
-            await base.Given();
-            Client = new StreamMock();
+            tbase.Client = new StreamMock();
         }
 
         private class StreamMock : IStream

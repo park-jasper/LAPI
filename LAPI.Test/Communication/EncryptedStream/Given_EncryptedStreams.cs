@@ -5,7 +5,7 @@ using LAPI.Test.Mocks;
 
 namespace LAPI.Test.Communication.EncryptedStream
 {
-    public class Given_EncryptedStreams : IStreamTestBase
+    public class Given_EncryptedStreams : StreamTestBase
     {
         protected ICryptographicService Crypto;
         public override async Task Given()
