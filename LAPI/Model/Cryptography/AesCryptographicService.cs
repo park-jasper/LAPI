@@ -8,7 +8,7 @@ namespace LAPI.Model
     {
         private readonly SymmetricAlgorithm _aes;
         private readonly byte[] _key;
-        private RNGCryptoServiceProvider _random;
+        private readonly RNGCryptoServiceProvider _random;
         public const int BitsPerByte = 8;
         public const int BlockSize = 128 / BitsPerByte;
         public const int IvSize = 128 / BitsPerByte;

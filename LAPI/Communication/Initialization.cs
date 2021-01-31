@@ -27,7 +27,7 @@ namespace LAPI.Communication
             Guid serverGuid,
             X509Certificate2 serverCertificate,
             ICryptographicService otp,
-            Action<AuthenticatedStream> onClientConnected,
+            Action<Guid, AuthenticatedStream> onClientConnected,
             Action<Guid, X509Certificate> onClientRegistered,
             Func<Guid, X509Certificate> getClientPublicKey,
             CancellationToken token)
@@ -60,10 +60,12 @@ namespace LAPI.Communication
             {
                 case InitiationMode.Otp:
                     var clientRegistrationResult =
-                        await HandleClientRegistrationSafelyAsync(clientStream, otp, token);
+                        await HandleClientRegistrationSafelyAsync(clientStream, serverGuid, serverCertificate, otp, token);
                     if (clientRegistrationResult.Successful)
                     {
-                        onClientRegistered(clientGuid, clientRegistrationResult.Result);
+                        var (certificate, stream) = clientRegistrationResult.Result;
+                        onClientRegistered(clientGuid, certificate);
+                        onClientConnected(clientGuid, stream);
                     }
                     else
                     {
@@ -86,7 +88,7 @@ namespace LAPI.Communication
                     {
                         return encryptedStreamResult;
                     }
-                    onClientConnected(encryptedStreamResult.Result);
+                    onClientConnected(clientGuid, encryptedStreamResult.Result);
                     return new CommunicationResult
                     {
                         Successful = true,
@@ -114,12 +116,14 @@ namespace LAPI.Communication
             return false;
         }
 
-        public static async Task<CommunicationResult<X509Certificate>> HandleClientRegistrationSafelyAsync(
+        public static async Task<CommunicationResult<(X509Certificate,AuthenticatedStream)>> HandleClientRegistrationSafelyAsync(
             Stream clientStream,
+            Guid serverGuid,
+            X509Certificate2 serverCertificate,
             ICryptographicService otp, 
             CancellationToken token)
         {
-            CommunicationResult<X509Certificate> From(CommunicationResult result) => From<X509Certificate>(result);
+            CommunicationResult<(X509Certificate,AuthenticatedStream)> From(CommunicationResult res) => From<(X509Certificate, AuthenticatedStream)>(res);
             var Failed = From(CommunicationResult.Failed);
 
             if (!otp.CanDecrypt)
@@ -137,31 +141,33 @@ namespace LAPI.Communication
                 return Failed;
             }
 
-            var getKeyLengthResult = await GetEncryptedPublicKeyLengths(clientStream, token);
-            if (!getKeyLengthResult.Successful)
+            var encryptedLengthResult = await clientStream.ReceiveInt32SafelyAsync(token);
+            if (!encryptedLengthResult.Successful)
             {
-                return From(getKeyLengthResult);
+                return From(encryptedLengthResult);
             }
-            var pubKeyInfo = getKeyLengthResult.Result;
-            var encryptedCombinationResult =
-                await clientStream.ReadSafelyAsync(pubKeyInfo.EncryptedCombinationLength, token);
-            if (!encryptedCombinationResult.Successful)
+            var encryptedCertificateResult = await clientStream.ReadSafelyAsync(encryptedLengthResult.Result, token);
+            if (!encryptedCertificateResult.Successful)
             {
-                return From(encryptedCombinationResult);
+                return From(encryptedCertificateResult);
             }
-            var encryptedCombination = encryptedCombinationResult.Result;
-            var decryptedCombination = otp.Decrypt(encryptedCombination);
-            var modulus = new byte[pubKeyInfo.DecryptedModulusLength];
-            var decryptedExponentLength = decryptedCombination.Length - pubKeyInfo.DecryptedModulusLength - pubKeyInfo.ExponentPadding;
-            var exponent = new byte[decryptedExponentLength];
-            Array.Copy(decryptedCombination, 0, modulus, 0, pubKeyInfo.DecryptedModulusLength);
-            Array.Copy(decryptedCombination, pubKeyInfo.DecryptedModulusLength, exponent, 0, decryptedExponentLength);
-            var clientPublicKey = new RsaPublicKey(modulus, exponent);
-            return new CommunicationResult<X509Certificate>
+            var certificate = otp.Decrypt(encryptedCertificateResult.Result);
+            var result = new X509Certificate();
+            result.Import(certificate);
+
+            var authenticationResult = await EstablishEncryptedCommunication(true, serverGuid, serverCertificate, result, clientStream);
+            if (authenticationResult.Successful)
             {
-                Successful = true,
-                Result = null,//clientPublicKey,
-            };
+                return new CommunicationResult<(X509Certificate, AuthenticatedStream)>
+                {
+                    Successful = true,
+                    Result = (result, authenticationResult.Result),
+                };
+            }
+            else
+            {
+                return From(authenticationResult);
+            }
         }
 
         public static async Task<CommunicationResult<EncryptedPublicKeyInformationMessage>> GetEncryptedPublicKeyLengths(
@@ -264,6 +270,54 @@ namespace LAPI.Communication
             };
         }
 
+        public static async Task<CommunicationResult<AuthenticatedStream>> RegisterWithServerAsync(
+            Stream serverStream,
+            byte[] presharedKey,
+            Guid ownGuid,
+            Guid serverGuid,
+            X509Certificate2 clientCertificate, 
+            X509Certificate serverCertificate,
+            ICryptographicService otp)
+        {
+            CommunicationResult<AuthenticatedStream> From(CommunicationResult res) => From<AuthenticatedStream>(res);
+            if (!otp.CanEncrypt)
+            {
+                throw new ArgumentException("otp needs to be able to encrypt");
+            }
+            var timeoutCancellationTokenSource = new CancellationTokenSource();
+            timeoutCancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(5));
+            var token = timeoutCancellationTokenSource.Token;
+
+            await serverStream.WriteSafelyAsync(token, presharedKey);
+            var serverGuidResult = await serverStream.ReceiveGuidSafelyAsync(token);
+            if (!serverGuidResult.Successful)
+            {
+                return From(serverGuidResult);
+            }
+            if (!serverGuidResult.Result.Equals(serverGuid))
+            {
+                return new CommunicationResult<AuthenticatedStream>
+                {
+                    Successful = false,
+                    Exception = new AuthenticationException(
+                        $"Expected server to send Guid '{serverGuid}', instead got '{serverGuidResult.Result}'")
+                };
+            }
+            await serverStream.WriteSafelyAsync(token, 
+                ownGuid, 
+                (int) InitiationMode.Otp);
+
+            var exportCertificate = clientCertificate.Export(X509ContentType.Cert);
+            var encryptedCertificate = otp.Encrypt(exportCertificate);
+            await serverStream.WriteSafelyAsync(token,
+                (int) CommunicationData.PublicKey,
+                encryptedCertificate.Length,
+                encryptedCertificate);
+
+            return await EstablishEncryptedCommunication(false, serverGuid, clientCertificate, serverCertificate,
+                serverStream);
+        }
+
         public static async Task<CommunicationResult<AuthenticatedStream>> ConnectToServer(
             Stream serverStream,
             byte[] presharedKey,
@@ -283,6 +337,15 @@ namespace LAPI.Communication
             if (!serverGuidResult.Successful)
             {
                 return From(serverGuidResult);
+            }
+            if (!serverGuidResult.Result.Equals(serverGuid))
+            {
+                return From(new CommunicationResult
+                {
+                    Successful = false,
+                    Exception = new AuthenticationException(
+                        $"Expected server to send Guid '{serverGuid}', instead got '{serverGuidResult.Result}'")
+                });
             }
             await serverStream.WriteSafelyAsync(token, ownGuid, (int) InitiationMode.Standard);
 

@@ -17,9 +17,20 @@ namespace LAPI
 {
     public class Lapi
     {
-        public static ClientControl RegisterWithServer(Stream clientStream, Guid serverGuid, SymmetricKey serverOtp)
+        public static async Task<CommunicationResult<AuthenticatedStream>> RegisterWithServer(
+            IPAddress ipAddress,
+            byte[] presharedKey,
+            Guid ownGuid,
+            Guid serverGuid,
+            X509Certificate2 clientCertificate,
+            X509Certificate serverCertificate,
+            ICryptographicService otp,
+            int port)
         {
-            throw new NotImplementedException();
+            var client = new TcpClient();
+            await client.ConnectAsync(ipAddress, port);
+
+            return await Initialization.RegisterWithServerAsync(client.GetStream(), presharedKey, ownGuid, serverGuid, clientCertificate, serverCertificate, otp);
         }
 
         public static async Task<CommunicationResult<AuthenticatedStream>> ConnectToServer(
@@ -44,7 +55,7 @@ namespace LAPI
             Guid serverGuid,
             X509Certificate2 serverCertificate,
             Func<ICryptographicService> getOtp,
-            Action<AuthenticatedStream> onClientConnected,
+            Action<Guid, AuthenticatedStream> onClientConnected,
             Action<Guid, X509Certificate> onClientRegistered,
             Func<Guid, X509Certificate> getClientPublicKey,
             int discoveryPort = DefaultDiscoveryPort)
@@ -72,7 +83,7 @@ namespace LAPI
             Guid serverGuid,
             X509Certificate2 serverCertificate,
             Func<ICryptographicService> getOtp,
-            Action<AuthenticatedStream> onClientConnected,
+            Action<Guid, AuthenticatedStream> onClientConnected,
             Action<Guid, X509Certificate> onClientRegistered,
             Func<Guid, X509Certificate> getClientPublicKey,
             CancellationToken token)

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
@@ -14,7 +13,7 @@ using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
-using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
+using X509Certificate = System.Security.Cryptography.X509Certificates.X509Certificate;
 
 namespace LAPI.Model.Cryptography
 {
@@ -81,8 +80,12 @@ namespace LAPI.Model.Cryptography
             return ToCertificateWithPrivateKey(ownIdentity, certificate, keyPair, password, random);
         }
 
-        public static X509Certificate2 ToCertificateWithPrivateKey(Guid ownIdentity, X509Certificate certificate,
-            AsymmetricCipherKeyPair keyPair, string password, SecureRandom random)
+        public static X509Certificate2 ToCertificateWithPrivateKey(
+            Guid ownIdentity, 
+            Org.BouncyCastle.X509.X509Certificate certificate,
+            AsymmetricCipherKeyPair keyPair, 
+            string password, 
+            SecureRandom random)
         {
             var ownCertificateStore = new FileInfo(GetStorePath(ownIdentity));
 
@@ -100,15 +103,43 @@ namespace LAPI.Model.Cryptography
             {
                 ownCertificateStore.Delete();
             }
-            using (var s = ownCertificateStore.OpenWrite())
+            using (var file = ownCertificateStore.OpenWrite())
             {
                 newStore.Save(
-                    s, 
+                    file, 
                     password.ToCharArray(),
                     random);
             }
 
             return new X509Certificate2(ownCertificateStore.FullName, password);
+        }
+
+        public static X509Certificate GetRemoteCertificate(Guid remoteGuid)
+        {
+            var remoteCertificateStore = new FileInfo(GetStorePath(remoteGuid));
+            if (remoteCertificateStore.Exists)
+            {
+                var cert = new X509Certificate();
+                cert.Import(remoteCertificateStore.FullName);
+                return new X509Certificate(remoteCertificateStore.FullName, "");
+            }
+            else
+            {
+                return null;
+            }
+        }
+        public static void SaveRemoteCertificate(Guid remoteGuid, X509Certificate certificate)
+        {
+            var remoteCertificateStore = new FileInfo(GetStorePath(remoteGuid));
+            if (remoteCertificateStore.Exists)
+            {
+                remoteCertificateStore.Delete();
+            }
+            var content = certificate.Export(X509ContentType.Cert);
+            using (var file = remoteCertificateStore.OpenWrite())
+            {
+                file.Write(content, 0, content.Length);
+            }
         }
     }
 }
