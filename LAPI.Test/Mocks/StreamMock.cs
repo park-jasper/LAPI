@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using LAPI.Contracts;
 
 namespace LAPI.Test.Mocks
 {
-    public class IStreamMock : IStream
+    public class StreamMock : Stream
     {
-        private IStreamMock _partner;
+        private StreamMock _partner;
         private readonly Deque<byte[]> _currentBufferQueue = new Deque<byte[]>();
         private readonly Deque<byte[]> _currentRequestBufferQueue = new Deque<byte[]>();
         private TaskCompletionSource<int> _currentTaskSource { get; set; }
@@ -33,7 +34,7 @@ namespace LAPI.Test.Mocks
                 }
             }
         }
-        public Task<int> ReadAsync(byte[] buffer, int count, CancellationToken token)
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken token)
         {
             lock (_completionLock)
             {
@@ -59,7 +60,7 @@ namespace LAPI.Test.Mocks
             }
         }
 
-        public Task WriteAsync(byte[] buffer, int count, CancellationToken token)
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken token)
         {
             var copy = Copy(buffer, count);
             _partner.PutBytes(copy, count);
@@ -74,21 +75,21 @@ namespace LAPI.Test.Mocks
             return result;
         }
 
-        private IStreamMock()
+        private StreamMock()
         {
 
         }
 
-        public static void Create(out IStream serverStream, out IStream clientStream)
+        public static void Create(out Stream serverStream, out Stream clientStream)
         {
-            var server = new IStreamMock();
-            var client = new IStreamMock();
+            var server = new StreamMock();
+            var client = new StreamMock();
             Link(server, client);
             serverStream = server;
             clientStream = client;
 
         }
-        private static void Link(IStreamMock left, IStreamMock right)
+        private static void Link(StreamMock left, StreamMock right)
         {
             left._partner = right;
             right._partner = left;
@@ -97,6 +98,42 @@ namespace LAPI.Test.Mocks
         public void Dispose()
         {
 
+        }
+
+        public override void Flush()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => true;
+        public override long Length => 0;
+
+        public override long Position
+        {
+            get => 0;
+            set { }
         }
     }
 }

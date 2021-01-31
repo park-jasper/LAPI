@@ -5,9 +5,18 @@ namespace LAPI.Model
 {
     public class ServerControl
     {
-        internal ServerControl(IServer server, CancellationTokenSource tokenSource)
-        {
+        private readonly IServer _server;
+        private readonly CancellationTokenSource _tokenSource;
 
+        public ServerControl(IServer server, CancellationTokenSource tokenSource)
+        {
+            _server = server;
+            _tokenSource = tokenSource;
+        }
+
+        public void StopServer()
+        {
+            _tokenSource.Cancel();
         }
     }
 }

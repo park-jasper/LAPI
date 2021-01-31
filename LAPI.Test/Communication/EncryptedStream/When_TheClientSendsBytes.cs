@@ -12,7 +12,7 @@ namespace LAPI.Test.Communication.EncryptedStream
         public override async Task When()
         {
             await base.When();
-            await Client.WriteAsync(_buffer, 8, Token);
+            await Client.WriteAsync(_buffer, Token);
         }
 
         [TestMethod]

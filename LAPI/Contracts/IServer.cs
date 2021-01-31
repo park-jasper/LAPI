@@ -1,10 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System.IO;
+using System.Threading.Tasks;
 
 namespace LAPI.Contracts
 {
     public interface IServer
     {
         void Start();
-        Task<IStream> AcceptClientAsync();
+        Task<Stream> AcceptClientAsync();
     }
 }

@@ -12,9 +12,9 @@ namespace LAPI.Test.Communication.EncryptedStream
         {
             await base.Given();
             Crypto = new ICryptographicServiceMock();
-            IStreamMock.Create(out var server, out var client);
-            Server = new LAPI.Communication.EncryptedStream(Crypto, server);
-            Client = new LAPI.Communication.EncryptedStream(Crypto, client);
+            StreamMock.Create(out var server, out var client);
+            //Server = new LAPI.Communication.EncryptedStream(Crypto, server);
+            //Client = new LAPI.Communication.EncryptedStream(Crypto, client);
         }
     }
 }

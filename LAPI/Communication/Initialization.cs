@@ -1,7 +1,11 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,15 +22,14 @@ namespace LAPI.Communication
         private static CommunicationResult<TResult> From<TResult>(CommunicationResult result) =>
             CommunicationResult<TResult>.From(result);
         public static async Task<CommunicationResult> HandleInitializationOfClient(
-            IStream clientStream,
+            Stream clientStream,
             byte[] presharedKey,
             Guid serverGuid,
+            X509Certificate2 serverCertificate,
             ICryptographicService otp,
-            IAsymmetricCryptographicService asymmetric,
-            ISymmetricCryptographicService symmetric,
-            Action<IStream> onClientConnected,
-            Action<Guid, RsaPublicKey> onClientRegistered,
-            Func<Guid, RsaPublicKey> getClientPublicKey,
+            Action<AuthenticatedStream> onClientConnected,
+            Action<Guid, X509Certificate> onClientRegistered,
+            Func<Guid, X509Certificate> getClientPublicKey,
             CancellationToken token)
         {
             var timeoutCancellationTokenSource = new CancellationTokenSource();
@@ -71,19 +74,19 @@ namespace LAPI.Communication
                         Successful = true,
                     };
                 case InitiationMode.Standard:
-                    var clientPublicKey = getClientPublicKey(clientGuid);
-                    if (clientPublicKey == null)
+                    var clientCertificate = getClientPublicKey(clientGuid);
+                    if (clientCertificate == null)
                     {
                         return CommunicationResult.Failed;
                     }
-                    var sessionKey = SymmetricKey.GenerateNewKey(symmetric.KeyLength);
-                    var sendSessionKeyResult = await clientStream.WriteSafelyAsync(token,
-                        asymmetric.Create(clientPublicKey).Encrypt(sessionKey.Key.ToArray()));
-                    if (!sendSessionKeyResult.Successful)
+                    //var sessionKey = SymmetricKey.GenerateNewKey(symmetric.KeyLength);
+
+                    var encryptedStreamResult = await EstablishEncryptedCommunication(true, serverGuid, serverCertificate, clientCertificate, clientStream);
+                    if (!encryptedStreamResult.Successful)
                     {
-                        return sendSessionKeyResult;
+                        return encryptedStreamResult;
                     }
-                    onClientConnected(new EncryptedStream(symmetric.Create(sessionKey), clientStream));
+                    onClientConnected(encryptedStreamResult.Result);
                     return new CommunicationResult
                     {
                         Successful = true,
@@ -94,7 +97,7 @@ namespace LAPI.Communication
         }
 
         public static async Task<bool> GetAndVerifyPresharedKey(
-            IStream clientStream, 
+            Stream clientStream, 
             byte[] presharedKey,
             CancellationToken token)
         {
@@ -111,12 +114,12 @@ namespace LAPI.Communication
             return false;
         }
 
-        public static async Task<CommunicationResult<RsaPublicKey>> HandleClientRegistrationSafelyAsync(
-            IStream clientStream,
+        public static async Task<CommunicationResult<X509Certificate>> HandleClientRegistrationSafelyAsync(
+            Stream clientStream,
             ICryptographicService otp, 
             CancellationToken token)
         {
-            CommunicationResult<RsaPublicKey> From(CommunicationResult result) => From<RsaPublicKey>(result);
+            CommunicationResult<X509Certificate> From(CommunicationResult result) => From<X509Certificate>(result);
             var Failed = From(CommunicationResult.Failed);
 
             if (!otp.CanDecrypt)
@@ -154,15 +157,15 @@ namespace LAPI.Communication
             Array.Copy(decryptedCombination, 0, modulus, 0, pubKeyInfo.DecryptedModulusLength);
             Array.Copy(decryptedCombination, pubKeyInfo.DecryptedModulusLength, exponent, 0, decryptedExponentLength);
             var clientPublicKey = new RsaPublicKey(modulus, exponent);
-            return new CommunicationResult<RsaPublicKey>
+            return new CommunicationResult<X509Certificate>
             {
                 Successful = true,
-                Result = clientPublicKey,
+                Result = null,//clientPublicKey,
             };
         }
 
         public static async Task<CommunicationResult<EncryptedPublicKeyInformationMessage>> GetEncryptedPublicKeyLengths(
-            IStream clientStream, 
+            Stream clientStream, 
             CancellationToken token)
         {
             var result = await clientStream.ReadSafelyAsync(2 * Size.Int + Size.Byte, token);
@@ -214,6 +217,78 @@ namespace LAPI.Communication
             {
                 Successful = true,
             };
+        }
+
+        public static async Task<CommunicationResult<AuthenticatedStream>> EstablishEncryptedCommunication(
+            bool asServer,
+            Guid serverGuid,
+            X509Certificate2 ownCertificate,
+            X509Certificate otherCertificate,
+            Stream stream)
+        {
+            bool IsValidRemoteParty(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors errors)
+            {
+                if (errors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable) || errors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch))
+                {
+                    return false;
+                }
+
+                return true; //TODO
+            }
+            SslStream sslStream = new SslStream(stream, false, IsValidRemoteParty);
+            try
+            {
+                if (asServer)
+                {
+                    await sslStream.AuthenticateAsServerAsync(ownCertificate, true, SslProtocols.None, true);
+                }
+                else
+                {
+                    var certs = new X509CertificateCollection() { ownCertificate };
+                    await sslStream.AuthenticateAsClientAsync(serverGuid.ToString(), certs, SslProtocols.None, true);
+                }
+            }
+            catch (AuthenticationException authExc)
+            {
+                return new CommunicationResult<AuthenticatedStream>
+                {
+                    Successful = false,
+                    Exception = authExc,
+                };
+            }
+
+            return new CommunicationResult<AuthenticatedStream>
+            {
+                Successful = true,
+                Result = sslStream,
+            };
+        }
+
+        public static async Task<CommunicationResult<AuthenticatedStream>> ConnectToServer(
+            Stream serverStream,
+            byte[] presharedKey,
+            Guid ownGuid,
+            Guid serverGuid,
+            X509Certificate2 clientCertificate,
+            X509Certificate serverCertificate)
+        {
+            CommunicationResult<AuthenticatedStream> From(CommunicationResult res) =>
+                CommunicationResult<AuthenticatedStream>.From(res);
+            var timeoutCancellationTokenSource = new CancellationTokenSource();
+            timeoutCancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(5));
+            var token = timeoutCancellationTokenSource.Token;
+
+            await serverStream.WriteSafelyAsync(token, presharedKey);
+            var serverGuidResult = await serverStream.ReceiveGuidSafelyAsync(token);
+            if (!serverGuidResult.Successful)
+            {
+                return From(serverGuidResult);
+            }
+            await serverStream.WriteSafelyAsync(token, ownGuid, (int) InitiationMode.Standard);
+
+            var encryptedStreamResult = await EstablishEncryptedCommunication(false, serverGuid, clientCertificate,
+                serverCertificate, serverStream);
+            return encryptedStreamResult;
         }
     }
 }

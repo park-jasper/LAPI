@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.IO;
+using System.Threading;
 using LAPI.Contracts;
 using LAPI.Model;
 
@@ -10,11 +11,11 @@ namespace LAPI.Test.Extensions.IStreamExtensions
     }
     public interface IClientTestBase : ITokenTestBase
     {
-        IStream Client { get; set; }
+        Stream Client { get; set; }
     }
     public interface IServerTestBase : ITokenTestBase
     {
-        IStream Server { get; set; }
+        Stream Server { get; set; }
     }
     public interface IStreamTestBase : IClientTestBase, IServerTestBase { }
     public interface ICommunicationResultTestBase
@@ -37,8 +38,8 @@ namespace LAPI.Test.Extensions.IStreamExtensions
     {
         protected override CommunicationResultTestBase Base => this;
 
-        public IStream Server { get; set; }
-        public IStream Client { get; set; }
+        public Stream Server { get; set; }
+        public Stream Client { get; set; }
 
         public CancellationToken Token { get; } = CancellationToken.None;
         public CommunicationResult Result { get; set; }
@@ -47,8 +48,8 @@ namespace LAPI.Test.Extensions.IStreamExtensions
     {
         protected override CommunicationResultTestBase<TResult> Base => this;
 
-        public IStream Server { get; set; }
-        public IStream Client { get; set; }
+        public Stream Server { get; set; }
+        public Stream Client { get; set; }
 
         public CancellationToken Token { get; } = CancellationToken.None;
         public CommunicationResult<TResult> Result { get; set; }

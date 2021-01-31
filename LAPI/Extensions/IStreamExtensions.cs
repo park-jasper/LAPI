@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,18 +18,18 @@ namespace LAPI.Extensions
         private static CommunicationResult<TResult> From<TResult>(CommunicationResult result) =>
             CommunicationResult<TResult>.From(result);
 
-        public static Task<int> ReadAsync(this IStream stream, byte[] buffer, CancellationToken token)
+        public static Task<int> ReadAsync(this Stream stream, byte[] buffer, CancellationToken token)
         {
-            return stream.ReadAsync(buffer, buffer.Length, token);
+            return stream.ReadAsync(buffer, 0, buffer.Length, token);
         }
 
-        public static Task WriteAsync(this IStream stream, byte[] buffer, CancellationToken token)
+        public static Task WriteAsync(this Stream stream, byte[] buffer, CancellationToken token)
         {
-            return stream.WriteAsync(buffer, buffer.Length, token);
+            return stream.WriteAsync(buffer, 0, buffer.Length, token);
         }
 
         public static async Task<CommunicationResult> WriteSafelyAsync(
-            this IStream stream, 
+            this Stream stream,
             CancellationToken token,
             params StreamWritable[] elements)
         {
@@ -36,7 +38,7 @@ namespace LAPI.Extensions
                 await stream.WriteAsync(StreamWritable.Combine(elements), token);
                 return new CommunicationResult
                 {
-                    Successful = true
+                    Successful = true,
                 };
             }
             catch (Exception exc)
@@ -44,11 +46,11 @@ namespace LAPI.Extensions
                 return new CommunicationResult
                 {
                     Successful = false,
-                    Exception = exc
+                    Exception = exc,
                 };
             }
         }
-        public static async Task<CommunicationResult<byte[]>> ReadSafelyAsync(this IStream stream, int length, CancellationToken token)
+        public static async Task<CommunicationResult<byte[]>> ReadSafelyAsync(this Stream stream, int length, CancellationToken token)
         {
             var buffer = new byte[length];
             try
@@ -74,7 +76,7 @@ namespace LAPI.Extensions
             return CommunicationResult<byte[]>.Failed;
         }
 
-        public static async Task<CommunicationResult<byte>> ReceiveByteSafelyAsync(this IStream stream, CancellationToken token)
+        public static async Task<CommunicationResult<byte>> ReceiveByteSafelyAsync(this Stream stream, CancellationToken token)
         {
             var result = await stream.ReadSafelyAsync(1, token);
             if (result.Successful)
@@ -88,7 +90,7 @@ namespace LAPI.Extensions
             return CommunicationResult<byte>.Failed;
         }
 
-        public static async Task<CommunicationResult<int>> ReceiveInt32SafelyAsync(this IStream stream, CancellationToken token)
+        public static async Task<CommunicationResult<int>> ReceiveInt32SafelyAsync(this Stream stream, CancellationToken token)
         {
             var result = await stream.ReadSafelyAsync(Int32ByteSize, token);
             if (result.Successful)
@@ -102,7 +104,7 @@ namespace LAPI.Extensions
             return From<int>(result);
         }
 
-        public static async Task<CommunicationResult<Guid>> ReceiveGuidSafelyAsync(this IStream stream, CancellationToken token)
+        public static async Task<CommunicationResult<Guid>> ReceiveGuidSafelyAsync(this Stream stream, CancellationToken token)
         {
             var result = await stream.ReadSafelyAsync(new Guid().ToByteArray().Length, token);
             if (result.Successful)
@@ -118,7 +120,7 @@ namespace LAPI.Extensions
 
         public class StreamWritable
         {
-            private byte[] _buffer;
+            private readonly byte[] _buffer;
             private StreamWritable(byte[] buffer)
             {
                 _buffer = buffer;
@@ -134,15 +136,15 @@ namespace LAPI.Extensions
 
             public static implicit operator StreamWritable(Guid guid) => new StreamWritable(guid.ToByteArray());
 
-            public static byte[] Combine(StreamWritable[] writables)
+            public static byte[] Combine(IReadOnlyCollection<StreamWritable> writables)
             {
                 var totalLength = writables.Sum(x => x._buffer.Length);
                 var result = new byte[totalLength];
                 var currentIndex = 0;
-                for (int i = 0; i < writables.Length; i += 1)
+                foreach (var part in writables)
                 {
-                    Array.Copy(writables[i]._buffer, 0, result, currentIndex, writables[i]._buffer.Length);
-                    currentIndex += writables[i]._buffer.Length;
+                    Array.Copy(part._buffer, 0, result, currentIndex, part._buffer.Length);
+                    currentIndex += part._buffer.Length;
                 }
                 return result;
             }

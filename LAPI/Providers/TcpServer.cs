@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -20,10 +21,10 @@ namespace LAPI.Providers
             _listener.Start();
         }
 
-        public async Task<IStream> AcceptClientAsync()
+        public async Task<Stream> AcceptClientAsync()
         {
             var client = await _listener.AcceptTcpClientAsync();
-            return new TcpClientStream(client);
+            return client.GetStream();
         }
 
         public static IPAddress GetLocalIpAddress()

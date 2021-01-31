@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using LAPI.Communication;
@@ -14,15 +17,24 @@ namespace LAPI
 {
     public class Lapi
     {
-        public static ClientControl RegisterWithServer(IStream clientStream, Guid serverGuid, SymmetricKey serverOtp)
+        public static ClientControl RegisterWithServer(Stream clientStream, Guid serverGuid, SymmetricKey serverOtp)
         {
             throw new NotImplementedException();
         }
 
-        public static ClientControl ConnectToServer(IStream clientStream, Guid serverGuid,
-            ICryptographicService serverEncryptor, ICryptographicService clientDecryptor)
+        public static async Task<CommunicationResult<AuthenticatedStream>> ConnectToServer(
+            IPAddress ipAddress, 
+            byte[] presharedKey, 
+            Guid ownGuid,
+            Guid serverGuid,
+            X509Certificate2 clientCertificate,
+            X509Certificate serverCertificate,
+            int port)
         {
-            throw new NotImplementedException();
+            var client = new TcpClient();
+            await client.ConnectAsync(ipAddress, port);
+
+            return await Initialization.ConnectToServer(client.GetStream(), presharedKey, ownGuid, serverGuid, clientCertificate, serverCertificate);
         }
 
         public const int DefaultDiscoveryPort = 11000;
@@ -30,12 +42,11 @@ namespace LAPI
             IServer server,
             byte[] presharedKey,
             Guid serverGuid,
+            X509Certificate2 serverCertificate,
             Func<ICryptographicService> getOtp,
-            IAsymmetricCryptographicService asymmetric,
-            ISymmetricCryptographicService symmetric,
-            Action<IStream> onClientConnected,
-            Action<Guid, RsaPublicKey> onClientRegistered,
-            Func<Guid, RsaPublicKey> getClientPublicKey,
+            Action<AuthenticatedStream> onClientConnected,
+            Action<Guid, X509Certificate> onClientRegistered,
+            Func<Guid, X509Certificate> getClientPublicKey,
             int discoveryPort = DefaultDiscoveryPort)
         {
             var tokenSource = new CancellationTokenSource();
@@ -44,9 +55,8 @@ namespace LAPI
                     server, 
                     presharedKey,
                     serverGuid,
+                    serverCertificate,
                     getOtp,
-                    asymmetric,
-                    symmetric,
                     onClientConnected,
                     onClientRegistered,
                     getClientPublicKey, 
@@ -60,12 +70,11 @@ namespace LAPI
             IServer server,
             byte[] presharedKey,
             Guid serverGuid,
+            X509Certificate2 serverCertificate,
             Func<ICryptographicService> getOtp,
-            IAsymmetricCryptographicService asymmetric,
-            ISymmetricCryptographicService symmetric,
-            Action<IStream> onClientConnected,
-            Action<Guid, RsaPublicKey> onClientRegistered,
-            Func<Guid, RsaPublicKey> getClientPublicKey,
+            Action<AuthenticatedStream> onClientConnected,
+            Action<Guid, X509Certificate> onClientRegistered,
+            Func<Guid, X509Certificate> getClientPublicKey,
             CancellationToken token)
         {
             server.Start();
@@ -78,11 +87,10 @@ namespace LAPI
                     Task.Run(
                         () => Initialization.HandleInitializationOfClient(
                             clientStream, 
-                            presharedKey, 
-                            serverGuid, 
+                            presharedKey,
+                            serverGuid,
+                            serverCertificate,
                             getOtp(), 
-                            asymmetric, 
-                            symmetric, 
                             onClientConnected, 
                             onClientRegistered, 
                             getClientPublicKey, 

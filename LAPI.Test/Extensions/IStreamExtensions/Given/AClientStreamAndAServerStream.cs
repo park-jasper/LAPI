@@ -6,7 +6,7 @@ namespace LAPI.Test.Extensions.IStreamExtensions.Given
     {
         public void Given(IStreamTestBase tbase)
         {
-            IStreamMock.Create(out var server, out var client);
+            StreamMock.Create(out var server, out var client);
             tbase.Server = server;
             tbase.Client = client;
         }
