@@ -51,32 +51,22 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Communication\EncryptedStream\Given_EncryptedStreams.cs" />
-    <Compile Include="Communication\EncryptedStream\StreamTestBase.cs" />
-    <Compile Include="Communication\EncryptedStream\When_TheClientSendsBytes.cs" />
-    <Compile Include="Extensions\IStreamExtensions\CommunicationResultTestBase.cs" />
-    <Compile Include="Extensions\IStreamExtensions\Given\AClientStreamAndAServerStream.cs" />
-    <Compile Include="Extensions\IStreamExtensions\Given\AClientStreamThatThrowsAnException.cs" />
-    <Compile Include="Extensions\IStreamExtensions\StreamExtensionTests.cs" />
-    <Compile Include="Extensions\IStreamExtensions\Then\TheReceivedDataIs.cs" />
-    <Compile Include="Extensions\IStreamExtensions\Then\TheResultIsNotSuccessful.cs" />
-    <Compile Include="Extensions\IStreamExtensions\Then\TheResultIsSuccessful.cs" />
-    <Compile Include="Extensions\IStreamExtensions\When\DataIsSentAndReceived.cs" />
-    <Compile Include="Extensions\IStreamExtensions\When\TheClientReadsSafely.cs" />
-    <Compile Include="Extensions\IStreamExtensions\When\TheClientReceivesAByteSafelyAsync.cs" />
-    <Compile Include="Extensions\IStreamExtensions\When\TheClientWritesSafely.cs" />
-    <Compile Include="GivenWhenThen.cs" />
-    <Compile Include="GivenWhenThenGeneric.cs" />
+    <Compile Include="Communication\StreamTestBase.cs" />
+    <Compile Include="Communication\EncryptedStream\ReceiveTests.cs" />
+    <Compile Include="Communication\Initialization\InitializationTestBase.cs" />
+    <Compile Include="Communication\Initialization\RegistrationTests.cs" />
+    <Compile Include="Extensions\StreamExtensions\ByteArrayResultBase.cs" />
+    <Compile Include="Extensions\StreamExtensions\MalfunctioningStreamTest.cs" />
+    <Compile Include="Mocks\MalfunctioningStream.cs" />
+    <Compile Include="Extensions\StreamExtensions\StreamExtensionsTestBase.cs" />
     <Compile Include="Mocks\Deque.cs" />
-    <Compile Include="Mocks\ICryptographicServiceMock.cs" />
+    <Compile Include="Mocks\CryptographicServiceMock.cs" />
+    <Compile Include="Mocks\MockAsyncResult.cs" />
     <Compile Include="Mocks\StreamMock.cs" />
-    <Compile Include="Model\Cryptography\Given_AnAesCryptographicServiceWithValidKey.cs" />
-    <Compile Include="Model\Cryptography\Given_AnRsaCryptographicServiceWithAValidKeyPair.cs" />
+    <Compile Include="Model\Cryptography\AesTests.cs" />
+    <Compile Include="Model\Cryptography\CryptographyTestBase.cs" />
     <Compile Include="Model\Cryptography\TestData.cs" />
-    <Compile Include="Model\Cryptography\When_DataIsEncryptedAndThenDecryptedByAes.cs" />
-    <Compile Include="Model\Cryptography\When_DataIsEncryptedAndThenDecryptedByRsa.cs" />
     <Compile Include="Playground.cs" />
-    <Compile Include="TestSpecs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

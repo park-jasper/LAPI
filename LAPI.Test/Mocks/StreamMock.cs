@@ -33,38 +33,6 @@ namespace LAPI.Test.Mocks
                 }
             }
         }
-        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken token)
-        {
-            lock (_completionLock)
-            {
-                if (_currentBufferQueue.Count != 0)
-                {
-                    var availableBuffer = _currentBufferQueue.Dequeue();
-                    var minLength = Math.Min(count, availableBuffer.Length);
-                    Array.Copy(availableBuffer, buffer, minLength);
-                    if (minLength < availableBuffer.Length)
-                    {
-                        var reinsert = new byte[availableBuffer.Length - minLength];
-                        Array.Copy(availableBuffer, minLength, reinsert, 0, reinsert.Length);
-                        _currentBufferQueue.PushFront(reinsert);
-                    }
-                    return Task.FromResult(minLength);
-                }
-                else
-                {
-                    _currentTaskSource = new TaskCompletionSource<int>();
-                    _currentRequestBufferQueue.Enqueue(buffer);
-                    return _currentTaskSource.Task;
-                }
-            }
-        }
-
-        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken token)
-        {
-            var copy = Copy(buffer, count);
-            _partner.PutBytes(copy, count);
-            return Task.CompletedTask;
-        }
 
         private static byte[] Copy(byte[] buffer, int count)
         {
@@ -121,7 +89,47 @@ namespace LAPI.Test.Mocks
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            throw new NotImplementedException();
+            var copy = Copy(buffer, count);
+            _partner.PutBytes(copy, count);
+        }
+
+        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+        {
+            lock (_completionLock)
+            {
+                if (_currentBufferQueue.Count != 0)
+                {
+                    var availableBuffer = _currentBufferQueue.Dequeue();
+                    var minLength = Math.Min(count, availableBuffer.Length);
+                    Array.Copy(availableBuffer, buffer, minLength);
+                    if (minLength < availableBuffer.Length)
+                    {
+                        var reinsert = new byte[availableBuffer.Length - minLength];
+                        Array.Copy(availableBuffer, minLength, reinsert, 0, reinsert.Length);
+                        _currentBufferQueue.PushFront(reinsert);
+                    }
+
+                    return Task.FromResult(minLength).ToApm(callback, state);
+                }
+                else
+                {
+                    _currentTaskSource = new TaskCompletionSource<int>();
+                    _currentRequestBufferQueue.Enqueue(buffer);
+                    return _currentTaskSource.Task.ToApm(callback, state);
+                }
+            }
+        }
+
+        public override int EndRead(IAsyncResult asyncResult)
+        {
+            if (asyncResult is Task<int> task)
+            {
+                return task.Result;
+            }
+            else
+            {
+                throw new ArgumentException("not the right async result");
+            }
         }
 
         public override bool CanRead => true;

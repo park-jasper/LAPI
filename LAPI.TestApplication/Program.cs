@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using LAPI.Cryptography;
@@ -26,6 +27,9 @@ namespace LAPI.TestApplication
             var otpBuffer = Enumerable.Range(1, 32).Select(x => (byte) x).ToArray();
             var otp = new AesCryptographicService(SymmetricKey.FromBuffer(otpBuffer));
 
+            var reducedServerCert = new X509Certificate2(serverCert.Export(X509ContentType.Cert));
+            var reducedClientCert = new X509Certificate2(clientCert.Export(X509ContentType.Cert));
+
             var serverControl = Lapi.RunServer(
                 server,
                 presharedKey,
@@ -42,25 +46,35 @@ namespace LAPI.TestApplication
                     }
                     return null;
                 });
-            //var stream = Lapi.ConnectToServer(
-            //    IPAddress.Loopback, 
-            //    presharedKey, 
-            //    OtherTestGuid, 
-            //    TestGuid,
-            //    clientCert, 
-            //    serverCert, 
-            //    Port).Result;
+            serverControl.OnError += error => Console.WriteLine($"{error.ErrorType}: {error.Message}");
 
-            //Console.WriteLine($"Successful connected: {stream.Successful}");
+            var stream = Lapi.ConnectToServer(
+                IPAddress.Loopback,
+                presharedKey,
+                OtherTestGuid,
+                TestGuid,
+                clientCert,
+                serverCert,
+                Port).Result;
+
+            Console.WriteLine($"Successful connected: {stream.Successful}");
             //Console.WriteLine("Attempting to read from server");
 
             //byte[] buf = new byte[4];
             //stream.Result.ReadAsync(buf, 0, 4).Wait();
             //Console.WriteLine($"Received: {string.Join(", ", buf)}");
 
-            var registerResult = Lapi.RegisterWithServer(IPAddress.Loopback, presharedKey, OtherTestGuid, TestGuid, clientCert, serverCert, otp, Port).Result;
-            Console.WriteLine("Registering was " + (registerResult.Successful ? "" : "not ") + "successful");
-            registerResult.Result.Close();
+
+            //var registerResult = Lapi.RegisterWithServer(IPAddress.Loopback, presharedKey, OtherTestGuid, TestGuid, clientCert, serverCert, otp, Port).Result;
+            //Console.WriteLine("Registering was " + (registerResult.Successful ? "" : "not ") + "successful");
+            //registerResult.Result.Close();
+
+            //var guidsResult = Lapi.DiscoverServersOnLocalNetwork(presharedKey).Result;
+            //Console.WriteLine($"Discovery was " + (guidsResult.Successful ? "" : "not ") + "successful");
+            //if (guidsResult.Successful)
+            //{
+            //    Console.WriteLine($"Found servers on network: {string.Join(", ", guidsResult.Result)}");
+            //}
 
             Console.ReadLine();
             serverControl.StopServer();

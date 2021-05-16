@@ -1,8 +1,9 @@
-﻿using LAPI.Model;
+﻿using LAPI.Domain.Contracts.Cryptography;
+using LAPI.Domain.Model.Cryptography;
 
 namespace LAPI.Test.Mocks
 {
-    public class ICryptographicServiceMock : ICryptographicService
+    public class CryptographicServiceMock : ICryptographicService
     {
         public byte[] Encrypt(byte[] content)
         {

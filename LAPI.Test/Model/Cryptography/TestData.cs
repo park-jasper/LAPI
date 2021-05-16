@@ -70,8 +70,8 @@ namespace LAPI.Test.Model.Cryptography
 
         private static readonly byte[] TestPublicExponent = { 1, 0, 1 };
 
-        public static RsaPrivateKey TestAsymmetricPrivateKey { get; } = new RsaPrivateKey(TestModulus, TestPrivateExponent);
-        public static RsaPublicKey TestAsymmetricPublicKey { get; } = new RsaPublicKey(TestModulus, TestPublicExponent);
-        public static RsaKeyPair TestAsymmetricKeyPair { get; } = new RsaKeyPair(TestAsymmetricPrivateKey, TestAsymmetricPublicKey);
+        //public static RsaPrivateKey TestAsymmetricPrivateKey { get; } = new RsaPrivateKey(TestModulus, TestPrivateExponent);
+        //public static RsaPublicKey TestAsymmetricPublicKey { get; } = new RsaPublicKey(TestModulus, TestPublicExponent);
+        //public static RsaKeyPair TestAsymmetricKeyPair { get; } = new RsaKeyPair(TestAsymmetricPrivateKey, TestAsymmetricPublicKey);
     }
 }
