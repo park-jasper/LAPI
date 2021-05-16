@@ -8,10 +8,11 @@ using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using LAPI.Communication;
-using LAPI.Contracts;
-using LAPI.Model;
-using LAPI.Model.Cryptography;
+using LAPI.Domain.Communication;
+using LAPI.Domain.Contracts;
+using LAPI.Domain.Contracts.Cryptography;
+using LAPI.Domain.Model;
+using LAPI.Domain.Model.Cryptography;
 
 namespace LAPI
 {
@@ -134,7 +135,20 @@ namespace LAPI
                 while (!token.IsCancellationRequested)
                 {
                     var request = await discoveryServer.ReceiveAsync();
-                    await Initialization.HandleServerDiscoveryMessage(request.Buffer, request.RemoteEndPoint, presharedKey, serverGuid, token);
+
+                    Task SendAnswerAsync(byte[] datagram, int length)
+                    {
+                        var ep = request.RemoteEndPoint;
+                        var responseClient = new UdpClient(ep.Port, ep.AddressFamily);
+                        return responseClient.SendAsync(datagram, length, ep);
+                    }
+
+                    await Initialization.HandleServerDiscoveryMessage(
+                        request.Buffer, 
+                        SendAnswerAsync, 
+                        presharedKey, 
+                        serverGuid, 
+                        token);
                 }
             }
             catch (SocketException sexc)

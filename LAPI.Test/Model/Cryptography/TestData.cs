@@ -1,8 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Linq;
 using System.Security.Cryptography;
-using LAPI.Model;
-using LAPI.Model.Cryptography;
+using LAPI.Domain.Model.Cryptography;
 
 namespace LAPI.Test.Model.Cryptography
 {

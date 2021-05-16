@@ -3,7 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using LAPI.Contracts;
+using LAPI.Domain.Contracts;
 
 namespace LAPI.Providers
 {

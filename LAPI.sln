@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAPI.Test", "LAPI.Test\LAPI
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAPI.TestApplication", "LAPI.TestApplication\LAPI.TestApplication.csproj", "{9B345489-A32B-4727-BDCE-BFA2CE47BE43}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAPI.Domain", "LAPI.Domain\LAPI.Domain.csproj", "{F9B39E84-4D6D-4157-B187-2B567EFF3C22}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{9B345489-A32B-4727-BDCE-BFA2CE47BE43}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B345489-A32B-4727-BDCE-BFA2CE47BE43}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B345489-A32B-4727-BDCE-BFA2CE47BE43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9B39E84-4D6D-4157-B187-2B567EFF3C22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9B39E84-4D6D-4157-B187-2B567EFF3C22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9B39E84-4D6D-4157-B187-2B567EFF3C22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9B39E84-4D6D-4157-B187-2B567EFF3C22}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

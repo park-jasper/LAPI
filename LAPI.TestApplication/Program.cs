@@ -5,8 +5,8 @@ using System.Net;
 using System.Net.Security;
 using System.Text;
 using System.Threading.Tasks;
-using LAPI.Model;
-using LAPI.Model.Cryptography;
+using LAPI.Cryptography;
+using LAPI.Domain.Model.Cryptography;
 using LAPI.Providers;
 
 namespace LAPI.TestApplication
