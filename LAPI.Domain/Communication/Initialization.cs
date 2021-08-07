@@ -7,9 +7,12 @@ using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
 using CSharpToolbox.Extensions;
+using LAPI.Abstractions.Cryptography;
+using LAPI.Abstractions.Result;
 using LAPI.Domain.Contracts;
 using LAPI.Domain.Contracts.Cryptography;
 using LAPI.Domain.Extensions;
+using LAPI.Domain.Extensions.ResultExtensions;
 using LAPI.Domain.Model;
 using Newtonsoft.Json;
 
@@ -26,7 +29,7 @@ namespace LAPI.Domain.Communication
             Stream clientStream,
             byte[] presharedKey,
             Guid serverGuid,
-            X509Certificate2 serverCertificate,
+            IAuthenticatedConnectionFactory authenticatedConnectionFactory,
             ICryptographicService otp,
             Action<Guid, AuthenticatedStream> onClientConnected,
             Action<Guid, X509Certificate> onClientRegistered,
@@ -57,7 +60,7 @@ namespace LAPI.Domain.Communication
                     },
                 };
             }
-            await clientStream.WriteSafelyAsync(token, serverGuid);
+            await clientStream.WriteSafelyAsync(serverGuid, token);
             var clientGuidResult = await clientStream.ReceiveGuidSafelyAsync(token);
             if (!clientGuidResult.Successful)
             {
@@ -73,7 +76,7 @@ namespace LAPI.Domain.Communication
             {
                 case InitiationMode.Otp:
                     var clientRegistrationResult =
-                        await HandleClientRegistrationSafelyAsync(clientStream, serverGuid, serverCertificate, otp, token);
+                        await HandleClientRegistrationSafelyAsync(clientStream, serverGuid, authenticatedConnectionFactory, otp, token);
                     if (clientRegistrationResult.Successful)
                     {
                         var (certificate, stream) = clientRegistrationResult.Result;
@@ -96,7 +99,7 @@ namespace LAPI.Domain.Communication
                     }
                     //var sessionKey = SymmetricKey.GenerateNewKey(symmetric.KeyLength);
 
-                    var encryptedStreamResult = await EstablishEncryptedCommunication(true, serverGuid, serverCertificate, clientCertificate, clientStream, token);
+                    var encryptedStreamResult = await EstablishEncryptedCommunication(true, serverGuid, authenticatedConnectionFactory, clientStream, token);
                     if (!encryptedStreamResult.Successful)
                     {
                         return encryptedStreamResult;
@@ -142,7 +145,7 @@ namespace LAPI.Domain.Communication
         public static async Task<InitializationResult<(X509Certificate,AuthenticatedStream)>> HandleClientRegistrationSafelyAsync(
             Stream clientStream,
             Guid serverGuid,
-            X509Certificate2 serverCertificate,
+            IAuthenticatedConnectionFactory authenticatedConnectionFactory,
             ICryptographicService otp,
             CancellationToken token)
         {
@@ -183,7 +186,7 @@ namespace LAPI.Domain.Communication
             }
             var clientCertificate = new X509Certificate(otp.Decrypt(encryptedCertificateResult.Result));
 
-            var authenticationResult = await EstablishEncryptedCommunication(true, serverGuid, serverCertificate, clientCertificate, clientStream, token);
+            var authenticationResult = await EstablishEncryptedCommunication(true, serverGuid, authenticatedConnectionFactory, clientStream, token);
             if (authenticationResult.Successful)
             {
                 return new InitializationResult<(X509Certificate, AuthenticatedStream)>
@@ -235,20 +238,10 @@ namespace LAPI.Domain.Communication
         public static async Task<InitializationResult<AuthenticatedStream>> EstablishEncryptedCommunication(
             bool asServer,
             Guid serverGuid,
-            X509Certificate2 ownCertificate,
-            X509Certificate otherCertificate,
+            IAuthenticatedConnectionFactory authenticatedConnectionFactory,
             Stream stream,
             CancellationToken token)
         {
-            bool IsValidRemoteParty(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors errors)
-            {
-                if (errors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable) || errors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch))
-                {
-                    return false;
-                }
-
-                return true; //TODO
-            }
             async Task<CommunicationResult<string>> NotifyRemotePartyAndValidateRemotePartySuccess(string message)
             {
                 CommunicationResult<string> remoteResult;
@@ -256,11 +249,11 @@ namespace LAPI.Domain.Communication
                 if (asServer)
                 {
                     remoteResult = await stream.ReceiveStringSafelyAsync(token);
-                    writeResult = await stream.WriteSafelyAsync(token, message);
+                    writeResult = await stream.WriteSafelyAsync(message, token);
                 }
                 else
                 {
-                    writeResult = await stream.WriteSafelyAsync(token, message);
+                    writeResult = await stream.WriteSafelyAsync(message, token);
                     remoteResult = await stream.ReceiveStringSafelyAsync(token);
                 }
                 if (!writeResult.Successful && remoteResult.Successful)
@@ -271,97 +264,99 @@ namespace LAPI.Domain.Communication
             }
             Task<CommunicationResult> NotifyRemoteParty(string message)
             {
-                return stream.WriteSafelyAsync(token, message);
+                return stream.WriteSafelyAsync(message, token);
             }
-            SslStream sslStream = new SslStream(stream, false, IsValidRemoteParty);
-            try
+            AuthenticationResult authenticationResult;
+            if (asServer)
             {
-                if (asServer)
-                {
-                    await sslStream.AuthenticateAsServerAsync(ownCertificate, token);
-                }
-                else
-                {
-                    await sslStream.AuthenticateAsClientAsync(serverGuid, ownCertificate, token);
-                }
+                authenticationResult = await authenticatedConnectionFactory.AuthenticateAsServerAsync(stream, token);
             }
-            catch (AuthenticationException authExc)
+            else
             {
-                var failedInitResult = new InitializationResult
-                {
-                    Successful = false,
-                    Error = new InitializationError
-                    {
-                        ErrorType = InitializationErrorType.Authentication,
-                        Message = authExc.Message,
-                    },
-                };
-                await NotifyRemoteParty(JsonConvert.SerializeObject(failedInitResult));
-                return InitializationResult<AuthenticatedStream>.From(failedInitResult);
-            }
-            catch (NotSupportedException notSuppExc)
-            {
-                var failedInitResult = new InitializationResult
-                {
-                    Successful = false,
-                    Error = new InitializationError
-                    {
-                        ErrorType = InitializationErrorType.Authentication,
-                        Message = notSuppExc.Message,
-                    }
-                };
-                await NotifyRemoteParty(JsonConvert.SerializeObject(failedInitResult));
-                return InitializationResult<AuthenticatedStream>.From(failedInitResult);
-            }
-            catch (TaskCanceledException tcExc)
-            {
-                var failedInitResult = new InitializationResult<AuthenticatedStream>
-                {
-                    Successful = false,
-                    Error = new InitializationError
-                    {
-                        ErrorType = InitializationErrorType.CancellationRequested,
-                    },
-                };
-                return failedInitResult;
+                authenticationResult = await authenticatedConnectionFactory.AuthenticateAsClientAsync(stream, serverGuid, token);
             }
 
-            var successfulInitResult = new InitializationResult
-            {
-                Successful = true,
-            };
-            var remoteInitResult = await NotifyRemotePartyAndValidateRemotePartySuccess(JsonConvert.SerializeObject(successfulInitResult));
-            if (remoteInitResult.Successful)
-            {
-                var remoteInitializationResult = JsonConvert.DeserializeObject<InitializationResult>(remoteInitResult.Result);
-                if (remoteInitializationResult.Successful)
+            var result = await authenticationResult.Match(
+                async authenticated =>
                 {
-                    return new InitializationResult<AuthenticatedStream>
+                    var successfulInitResult = new InitializationResult
                     {
                         Successful = true,
-                        Result = sslStream,
                     };
-                }
-                else
+                    var remoteInitResult = await NotifyRemotePartyAndValidateRemotePartySuccess(JsonConvert.SerializeObject(successfulInitResult));
+                    if (remoteInitResult.Successful)
+                    {
+                        var remoteInitializationResult = JsonConvert.DeserializeObject<InitializationResult>(remoteInitResult.Result);
+                        if (remoteInitializationResult.Successful)
+                        {
+                            return new InitializationResult<AuthenticatedStream>
+                            {
+                                Successful = true,
+                                Result = authenticated.AuthenticatedStream,
+                            };
+                        }
+                        else
+                        {
+                            var self = asServer ? "server" : "client";
+                            var remote = asServer ? "client" : "server";
+                            return new InitializationResult<AuthenticatedStream>
+                            {
+                                Successful = false,
+                                Error = new InitializationError
+                                {
+                                    ErrorType = InitializationErrorType.Authentication,
+                                    Message = $"The remote {remote} encountered a problem authentication this {self}. Their message: '{remoteInitializationResult.Error.Message}'",
+                                },
+                            };
+                        }
+                    }
+                    else
+                    {
+                        return From<AuthenticatedStream>(remoteInitResult);
+                    }
+                },
+                async authenticationFailed =>
                 {
-                    var self = asServer ? "server" : "client";
-                    var remote = asServer ? "client" : "server";
-                    return new InitializationResult<AuthenticatedStream>
+                    var failedInitResult = new InitializationResult
                     {
                         Successful = false,
                         Error = new InitializationError
                         {
                             ErrorType = InitializationErrorType.Authentication,
-                            Message = $"The remote {remote} encountered a problem authentication this {self}. Their message: '{remoteInitializationResult.Error.Message}'",
+                            Message = authenticationFailed.Exception.Message,
                         },
                     };
-                }
-            }
-            else
-            {
-                return From<AuthenticatedStream>(remoteInitResult);
-            }
-            
+                    await NotifyRemoteParty(JsonConvert.SerializeObject(failedInitResult));
+                    return InitializationResult<AuthenticatedStream>.From(failedInitResult);
+                },
+                async notSupported =>
+                {
+                    var failedInitResult = new InitializationResult
+                    {
+                        Successful = false,
+                        Error = new InitializationError
+                        {
+                            ErrorType = InitializationErrorType.Authentication,
+                            Message = notSupported.Exception.Message,
+                        }
+                    };
+                    await NotifyRemoteParty(JsonConvert.SerializeObject(failedInitResult));
+                    return InitializationResult<AuthenticatedStream>.From(failedInitResult);
+                },
+                taskCanceled =>
+                {
+                    var failedInitResult = new InitializationResult<AuthenticatedStream>
+                    {
+                        Successful = false,
+                        Error = new InitializationError
+                        {
+                            ErrorType = InitializationErrorType.CancellationRequested,
+                        },
+                    };
+                    return Task.FromResult(failedInitResult);
+                });
+
+            return result;
         }
 
         public static async Task<InitializationResult<AuthenticatedStream>> RegisterWithServerAsync(
@@ -369,20 +364,20 @@ namespace LAPI.Domain.Communication
             byte[] presharedKey,
             Guid ownGuid,
             Guid serverGuid,
-            X509Certificate2 clientCertificate, 
+            IAuthenticatedConnectionFactory authenticatedConnectionFactory,
+            X509Certificate2 clientCertificate,
             X509Certificate serverCertificate,
-            ICryptographicService otp)
+            ICryptographicService otp,
+            CancellationToken token)
         {
             InitializationResult<AuthenticatedStream> From(CommunicationResult res) => From<AuthenticatedStream>(res);
             if (!otp.CanEncrypt)
             {
                 throw new ArgumentException("otp needs to be able to encrypt");
             }
-            var timeoutCancellationTokenSource = new CancellationTokenSource();
-            timeoutCancellationTokenSource.CancelAfter(DefaultTimeout);
-            var token = timeoutCancellationTokenSource.Token;
+            token = token.AddTimeout(DefaultTimeout);
 
-            await serverStream.WriteSafelyAsync(token, presharedKey);
+            await serverStream.WriteSafelyAsync(presharedKey, token);
             var serverGuidResult = await serverStream.ReceiveGuidSafelyAsync(token);
             if (!serverGuidResult.Successful)
             {
@@ -400,34 +395,36 @@ namespace LAPI.Domain.Communication
                     },
                 };
             }
-            await serverStream.WriteSafelyAsync(token, 
+            await serverStream.WriteSafelyAsync(
                 ownGuid, 
-                (int) InitiationMode.Otp);
+                (int) InitiationMode.Otp,
+                token);
 
             var exportCertificate = clientCertificate.Export(X509ContentType.Cert);
             var encryptedCertificate = otp.Encrypt(exportCertificate);
-            await serverStream.WriteSafelyAsync(token,
+            await serverStream.WriteSafelyAsync(
                 (int) CommunicationData.PublicKey,
                 encryptedCertificate.Length,
-                encryptedCertificate);
+                encryptedCertificate,
+                token);
 
-            return await EstablishEncryptedCommunication(false, serverGuid, clientCertificate, serverCertificate,
+            return await EstablishEncryptedCommunication(false, serverGuid, authenticatedConnectionFactory,
                 serverStream, token);
         }
 
-        public static async Task<InitializationResult<AuthenticatedStream>> ConnectToServer(
+        public static async Task<InitializationResult<AuthenticatedStream>> ConnectToServerAsync(
             Stream serverStream,
             byte[] presharedKey,
             Guid ownGuid,
             Guid serverGuid,
-            X509Certificate2 clientCertificate,
+            IAuthenticatedConnectionFactory authenticatedConnectionFactory,
             X509Certificate serverCertificate)
         {
             var timeoutCancellationTokenSource = new CancellationTokenSource();
             timeoutCancellationTokenSource.CancelAfter(DefaultTimeout);
             var token = timeoutCancellationTokenSource.Token;
 
-            await serverStream.WriteSafelyAsync(token, presharedKey);
+            await serverStream.WriteSafelyAsync(presharedKey, token);
             var serverGuidResult = await serverStream.ReceiveGuidSafelyAsync(token);
             if (!serverGuidResult.Successful)
             {
@@ -445,10 +442,13 @@ namespace LAPI.Domain.Communication
                     },
                 };
             }
-            await serverStream.WriteSafelyAsync(token, ownGuid, (int) InitiationMode.Standard);
+            await serverStream.WriteSafelyAsync(
+                ownGuid, 
+                (int) InitiationMode.Standard,
+                token);
 
-            var encryptedStreamResult = await EstablishEncryptedCommunication(false, serverGuid, clientCertificate,
-                serverCertificate, serverStream, token);
+            var encryptedStreamResult = await EstablishEncryptedCommunication(false, serverGuid, authenticatedConnectionFactory,
+                serverStream, token);
             return encryptedStreamResult;
         }
     }

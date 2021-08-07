@@ -32,7 +32,7 @@ namespace LAPI.Test.Extensions.StreamExtensions
         {
             return async () =>
             {
-                Result = await Client.WriteSafelyAsync(Token, bytes);
+                Result = await Client.WriteSafelyAsync(bytes, Token);
             };
         }
 

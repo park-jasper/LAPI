@@ -47,18 +47,36 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Samples\ClientSample.cs" />
+    <Compile Include="Samples\ServerSample.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\LAPI.Abstractions\LAPI.Abstractions.csproj">
+      <Project>{8d2563fe-7675-40e1-b289-b2f6a247cf9f}</Project>
+      <Name>LAPI.Abstractions</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LAPI.Domain\LAPI.Domain.csproj">
       <Project>{f9b39e84-4d6d-4157-b187-2b567eff3c22}</Project>
       <Name>LAPI.Domain</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ExteriorProviders\LAPI.ExteriorProviders.LocalNetwork\LAPI.ExteriorProviders.LocalNetwork.csproj">
+      <Project>{eaaf0a89-de5e-4c6d-a39e-2d6941f5b7a3}</Project>
+      <Name>LAPI.ExteriorProviders.LocalNetwork</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LAPI\LAPI.csproj">
       <Project>{3E7C3B80-745B-4739-AEE8-95E793FFD1C2}</Project>
       <Name>LAPI</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Providers\LAPI.Providers.Aes\LAPI.Providers.Aes.csproj">
+      <Project>{31747045-f1b6-4cc5-b01d-37d3ec1c281c}</Project>
+      <Name>LAPI.Providers.Aes</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Providers\LAPI.Providers.Ssl\LAPI.Providers.Ssl.csproj">
+      <Project>{3ae3192e-77e2-416d-a357-778188ee4307}</Project>
+      <Name>LAPI.Providers.Ssl</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -75,5 +93,6 @@
       <Version>4.8.1</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

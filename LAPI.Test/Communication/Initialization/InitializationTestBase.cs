@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using CSharpToolbox.UnitTesting;
 using FluentAssertions;
@@ -72,7 +73,8 @@ namespace LAPI.Test.Communication.Initialization
                 TestGuid,
                 ClientCertificate,
                 ServerCertificate,
-                OTP);
+                OTP,
+                CancellationToken.None);
             ServerConnectedStream = result.Result;
         }
 

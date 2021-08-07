@@ -62,11 +62,6 @@ namespace LAPI.Test.Mocks
             right._partner = left;
         }
 
-        public void Dispose()
-        {
-
-        }
-
         public override void Flush()
         {
             throw new NotImplementedException();

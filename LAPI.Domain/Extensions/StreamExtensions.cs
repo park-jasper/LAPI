@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Buffers;
+using System.Buffers.Binary;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -28,26 +31,68 @@ namespace LAPI.Domain.Extensions
 
         public static async Task<CommunicationResult> WriteSafelyAsync(
             this Stream stream,
+            StreamWritable element,
             CancellationToken token,
-            params StreamWritable[] elements)
+            bool recycle = true)
         {
             try
             {
-                await stream.WriteAsync(StreamWritable.Combine(elements), token);
-                return new CommunicationResult
+                await stream.WriteAsync(element.Buffer, 0, element.ContentLength, token);
+                if (recycle)
+                {
+                    element.RecycleBuffer();
+                }
+                return new CommunicationResult()
                 {
                     Successful = true,
                 };
             }
             catch (Exception exc)
             {
-                return new CommunicationResult
+                return new CommunicationResult()
                 {
                     Successful = false,
                     Exception = exc,
                 };
             }
         }
+
+        public static async Task<CommunicationResult> WriteSafelyAsync(
+            this Stream stream,
+            StreamWritable first,
+            StreamWritable second,
+            CancellationToken token,
+            bool recycle = true)
+        {
+            var combined = StreamWritable.Combine(first, second);
+            var result = await stream.WriteSafelyAsync(combined, token);
+            if (recycle)
+            {
+                first.RecycleBuffer();
+                second.RecycleBuffer();
+            }
+            return result;
+        }
+
+        public static async Task<CommunicationResult> WriteSafelyAsync(
+            this Stream stream,
+            StreamWritable first,
+            StreamWritable second,
+            StreamWritable third,
+            CancellationToken token,
+            bool recycle = true)
+        {
+            var combined = StreamWritable.Combine(first, second, third);
+            var result = await stream.WriteSafelyAsync(combined, token);
+            if (recycle)
+            {
+                first.RecycleBuffer();
+                second.RecycleBuffer();
+                third.RecycleBuffer();
+            }
+            return result;
+        }
+
         public static async Task<CommunicationResult<byte[]>> ReadSafelyAsync(this Stream stream, int length, CancellationToken token)
         {
             var buffer = new byte[length];
@@ -141,46 +186,118 @@ namespace LAPI.Domain.Extensions
             return From<Guid>(result);
         }
 
-        public class StreamWritable
+        public struct StreamWritable
         {
-            private readonly byte[] _buffer;
-            private StreamWritable(byte[] buffer)
+            public byte[] Buffer { get; private set; }
+            public readonly int ContentLength;
+            private bool recycleBuffer;
+
+            public StreamWritable(byte[] buffer, int contentLength, bool recycleBuffer)
             {
-                _buffer = buffer;
+                this.Buffer = buffer;
+                this.ContentLength = contentLength;
+                this.recycleBuffer = recycleBuffer;
             }
 
-            public static implicit operator StreamWritable(byte[] buffer) => new StreamWritable(buffer);
+            public void RecycleBuffer()
+            {
+                if (!recycleBuffer)
+                {
+                    return;
+                }
+                
+                BufferPool.Return(this.Buffer);
 
-            public static implicit operator StreamWritable(bool logical) => new StreamWritable(BitConverter.GetBytes(logical));
-            public static implicit operator StreamWritable(int number) => new StreamWritable(BitConverter.GetBytes(number));
-            public static implicit operator StreamWritable(long number) => new StreamWritable(BitConverter.GetBytes(number));
-            public static implicit operator StreamWritable(float number) => new StreamWritable(BitConverter.GetBytes(number));
-            public static implicit operator StreamWritable(double number) => new StreamWritable(BitConverter.GetBytes(number));
+                this.Buffer = null;
+                this.recycleBuffer = false;
+            }
 
-            public static implicit operator StreamWritable(Guid guid) => new StreamWritable(guid.ToByteArray());
+            private static readonly object Bottleneck = new object();
+            private static readonly ArrayPool<byte> BufferPool = ArrayPool<byte>.Shared;
+
+            public static implicit operator StreamWritable(byte[] buffer) =>
+                new StreamWritable(buffer, buffer.Length, false);
+
+            public static implicit operator StreamWritable(bool logical)
+            {
+                var buffer = BitConverter.GetBytes(logical);
+                return new StreamWritable(buffer, buffer.Length, true);
+            }
+
+            public static implicit operator StreamWritable(int number)
+            {
+                var buffer = BufferPool.Rent(4);
+                BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(), number);
+                return new StreamWritable(buffer, 4, true);
+            }
+
+            public static implicit operator StreamWritable(long number)
+            {
+                var buffer = BufferPool.Rent(8);
+                BinaryPrimitives.WriteInt64LittleEndian(buffer.AsSpan(), number);
+                return new StreamWritable(buffer, 8, true);
+            }
+
+            public static implicit operator StreamWritable(float number)
+            {
+                var buffer = BitConverter.GetBytes(number);
+                return new StreamWritable(buffer, buffer.Length, true);
+            }
+
+            public static implicit operator StreamWritable(double number)
+            {
+                var buffer = BitConverter.GetBytes(number);
+                return new StreamWritable(buffer, buffer.Length, true);
+            }
+
+            public static implicit operator StreamWritable(Guid guid)
+            {
+                var buffer = guid.ToByteArray();
+                return new StreamWritable(buffer, buffer.Length, true);
+            }
 
             public static implicit operator StreamWritable(string text)
             {
                 const int intLength = 4;
                 int stringEncodedLength = Encoding.UTF8.GetByteCount(text);
-                var buffer = new byte[intLength + stringEncodedLength];
-                var start = BitConverter.GetBytes(stringEncodedLength);
-                Array.Copy(start, 0, buffer, 0, intLength);
+                var buffer = BufferPool.Rent(intLength + stringEncodedLength);
+                BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(), stringEncodedLength);
                 Encoding.UTF8.GetBytes(text, 0, text.Length, buffer, intLength);
-                return new StreamWritable(buffer);
+                return new StreamWritable(buffer, intLength + stringEncodedLength, true);
             }
 
-            public static byte[] Combine(IReadOnlyCollection<StreamWritable> writables)
+            public static StreamWritable Combine(StreamWritable first, StreamWritable second)
             {
-                var totalLength = writables.Sum(x => x._buffer.Length);
-                var result = new byte[totalLength];
-                var currentIndex = 0;
-                foreach (var part in writables)
+                var totalLength = first.ContentLength + second.ContentLength;
+                if (first.Buffer.Length >= totalLength)
                 {
-                    Array.Copy(part._buffer, 0, result, currentIndex, part._buffer.Length);
-                    currentIndex += part._buffer.Length;
+                    Array.Copy(second.Buffer, 0, first.Buffer, first.ContentLength, second.ContentLength);
+                    return new StreamWritable(first.Buffer, totalLength, false);
                 }
-                return result;
+                var result = BufferPool.Rent(totalLength);
+                Array.Copy(first.Buffer, 0, result, 0, first.ContentLength);
+                Array.Copy(second.Buffer, 0, result, first.ContentLength, second.ContentLength);
+                return new StreamWritable(result, totalLength, true);
+            }
+
+            public static StreamWritable Combine(
+                StreamWritable first,
+                StreamWritable second,
+                StreamWritable third)
+            {
+                var totalLength = first.ContentLength + second.ContentLength + third.ContentLength;
+                if (first.Buffer.Length >= totalLength)
+                {
+                    Array.Copy(second.Buffer, 0, first.Buffer, first.ContentLength, second.ContentLength);
+                    Array.Copy(third.Buffer, 0, first.Buffer, first.ContentLength + second.ContentLength, third.ContentLength);
+                    return new StreamWritable(first.Buffer, totalLength, false);
+                }
+
+                var result = BufferPool.Rent(totalLength);
+                Array.Copy(first.Buffer, 0, result, 0, first.ContentLength);
+                Array.Copy(second.Buffer, 0, result, first.ContentLength, second.ContentLength);
+                Array.Copy(third.Buffer, 0, result, first.ContentLength + second.ContentLength, third.ContentLength);
+                return new StreamWritable(result, totalLength, true);
             }
         }
     }

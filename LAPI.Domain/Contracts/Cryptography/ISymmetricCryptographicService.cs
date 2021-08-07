@@ -1,4 +1,5 @@
-﻿using LAPI.Domain.Model.Cryptography;
+﻿using LAPI.Abstractions.Cryptography;
+using LAPI.Domain.Model.Cryptography;
 
 namespace LAPI.Domain.Contracts.Cryptography
 {
