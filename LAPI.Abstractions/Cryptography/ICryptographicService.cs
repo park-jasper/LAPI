@@ -1,4 +1,4 @@
-﻿namespace LAPI.Domain.Contracts.Cryptography
+﻿namespace LAPI.Abstractions.Cryptography
 {
     public interface ICryptographicService
     {

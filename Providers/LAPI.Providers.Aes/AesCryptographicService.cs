@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Cryptography;
+using LAPI.Abstractions.Cryptography;
 using LAPI.Domain.Contracts.Cryptography;
 using LAPI.Domain.Model.Cryptography;
 
-namespace LAPI.Cryptography
+namespace LAPI.Providers.Aes
 {
     public class AesCryptographicService : ICryptographicService
     {
@@ -21,7 +22,7 @@ namespace LAPI.Cryptography
             {
                 throw new ArgumentException($"Key does not have right size of {KeySize} bytes");
             }
-            _aes = Aes.Create();
+            _aes = System.Security.Cryptography.Aes.Create();
             _aes.Mode = CipherMode.CBC;
             _key = key.Key.ToArray();
             _random = new RNGCryptoServiceProvider();

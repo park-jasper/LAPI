@@ -2,6 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Jasper Marianczuk</Authors>
+    <Description>Local Application Programming Interface - connect devices without using a cloud. Default IServer implementation for LAN/Wifi in LAPI.Providers.LocalNetwork package</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/JMarianczuk/LAPI</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/JMarianczuk/LAPI</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>api localnetwork nocloud</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

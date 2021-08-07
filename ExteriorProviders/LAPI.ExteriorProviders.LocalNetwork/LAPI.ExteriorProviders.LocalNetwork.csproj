@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Jasper Marianczuk</Authors>
+    <Description>IServer implementation for Tcp communication</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/JMarianczuk/LAPI</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/JMarianczuk/LAPI</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>api localnetwork lan wifi nocloud</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\LAPI.Abstractions\LAPI.Abstractions.csproj" />
+    <ProjectReference Include="..\..\LAPI.Domain\LAPI.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

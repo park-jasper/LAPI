@@ -1,11 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using LAPI.Domain.Contracts;
+using LAPI.Abstractions;
 
-namespace LAPI.Providers
+namespace LAPI.ExteriorProviders.LocalNetwork
 {
     public class TcpServer : IServer
     {
@@ -23,8 +24,16 @@ namespace LAPI.Providers
 
         public async Task<Stream> AcceptClientAsync()
         {
-            var client = await _listener.AcceptTcpClientAsync();
-            return client.GetStream();
+            try
+            {
+                var client = await _listener.AcceptTcpClientAsync();
+                return client.GetStream();
+            }
+            catch (InvalidOperationException invalidOperationException)
+            {
+                throw new InvalidOperationException(
+                    $"Please call {nameof(TcpServer)}.{nameof(Start)} before accepting any clients.");
+            }
         }
 
         public static IPAddress GetLocalIpAddress()

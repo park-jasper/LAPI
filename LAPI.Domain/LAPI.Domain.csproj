@@ -2,6 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Jasper Marianczuk</Authors>
+    <Description>Domain project for LAPI defining data structures and business logic</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/JMarianczuk/LAPI</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/JMarianczuk/LAPI</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>api localnetwork nocloud</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,6 +18,10 @@
     <PackageReference Include="Portable.BouncyCastle" Version="1.8.10" />
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LAPI.Abstractions\LAPI.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

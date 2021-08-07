@@ -9,7 +9,30 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAPI.Test", "LAPI.Test\LAPI
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAPI.TestApplication", "LAPI.TestApplication\LAPI.TestApplication.csproj", "{9B345489-A32B-4727-BDCE-BFA2CE47BE43}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAPI.Domain", "LAPI.Domain\LAPI.Domain.csproj", "{F9B39E84-4D6D-4157-B187-2B567EFF3C22}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LAPI.Domain", "LAPI.Domain\LAPI.Domain.csproj", "{F9B39E84-4D6D-4157-B187-2B567EFF3C22}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LAPI.ExteriorProviders.LocalNetwork", "ExteriorProviders\LAPI.ExteriorProviders.LocalNetwork\LAPI.ExteriorProviders.LocalNetwork.csproj", "{EAAF0A89-DE5E-4C6D-A39E-2D6941F5B7A3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAPI.TestApplication.Droid", "LAPI.TestApplication.Droid\LAPI.TestApplication.Droid.csproj", "{8750605F-9295-437E-9D69-CEFD24CEB7BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAPI.ExteriorProviders.Droid.WirelessP2P", "ExteriorProviders\LAPI.ExteriorProviders.Droid.WirelessP2P\LAPI.ExteriorProviders.Droid.WirelessP2P.csproj", "{74007323-14DB-4B97-87EC-4E8D4F1C5A0B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LAPI.ExteriorProviders.Xamarin.WirelessP2P", "ExteriorProviders\LAPI.ExteriorProviders.Xamarin.WirelessP2P\LAPI.ExteriorProviders.Xamarin.WirelessP2P.csproj", "{7FE5AB92-ABA3-407E-ABEF-6407F349A3B0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5C6A5696-2FD2-43D4-9FCE-182253D3B63B}"
+	ProjectSection(SolutionItems) = preProject
+		readme.md = readme.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ExteriorProviders", "ExteriorProviders", "{BE2A8E56-E78E-4121-9C9D-92CF1F1B1F39}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LAPI.Abstractions", "LAPI.Abstractions\LAPI.Abstractions.csproj", "{8D2563FE-7675-40E1-B289-B2F6A247CF9F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Providers", "Providers", "{364E01B3-2818-4C9A-8B24-8536D8524AA8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAPI.Providers.Ssl", "Providers\LAPI.Providers.Ssl\LAPI.Providers.Ssl.csproj", "{3AE3192E-77E2-416D-A357-778188EE4307}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LAPI.Providers.Aes", "Providers\LAPI.Providers.Aes\LAPI.Providers.Aes.csproj", "{31747045-F1B6-4CC5-B01D-37D3EC1C281C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,9 +56,46 @@ Global
 		{F9B39E84-4D6D-4157-B187-2B567EFF3C22}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9B39E84-4D6D-4157-B187-2B567EFF3C22}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9B39E84-4D6D-4157-B187-2B567EFF3C22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAAF0A89-DE5E-4C6D-A39E-2D6941F5B7A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAAF0A89-DE5E-4C6D-A39E-2D6941F5B7A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAAF0A89-DE5E-4C6D-A39E-2D6941F5B7A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAAF0A89-DE5E-4C6D-A39E-2D6941F5B7A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8750605F-9295-437E-9D69-CEFD24CEB7BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8750605F-9295-437E-9D69-CEFD24CEB7BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8750605F-9295-437E-9D69-CEFD24CEB7BC}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{8750605F-9295-437E-9D69-CEFD24CEB7BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8750605F-9295-437E-9D69-CEFD24CEB7BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8750605F-9295-437E-9D69-CEFD24CEB7BC}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{74007323-14DB-4B97-87EC-4E8D4F1C5A0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74007323-14DB-4B97-87EC-4E8D4F1C5A0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74007323-14DB-4B97-87EC-4E8D4F1C5A0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74007323-14DB-4B97-87EC-4E8D4F1C5A0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7FE5AB92-ABA3-407E-ABEF-6407F349A3B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7FE5AB92-ABA3-407E-ABEF-6407F349A3B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7FE5AB92-ABA3-407E-ABEF-6407F349A3B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7FE5AB92-ABA3-407E-ABEF-6407F349A3B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D2563FE-7675-40E1-B289-B2F6A247CF9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D2563FE-7675-40E1-B289-B2F6A247CF9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D2563FE-7675-40E1-B289-B2F6A247CF9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D2563FE-7675-40E1-B289-B2F6A247CF9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3AE3192E-77E2-416D-A357-778188EE4307}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AE3192E-77E2-416D-A357-778188EE4307}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3AE3192E-77E2-416D-A357-778188EE4307}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3AE3192E-77E2-416D-A357-778188EE4307}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31747045-F1B6-4CC5-B01D-37D3EC1C281C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31747045-F1B6-4CC5-B01D-37D3EC1C281C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31747045-F1B6-4CC5-B01D-37D3EC1C281C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31747045-F1B6-4CC5-B01D-37D3EC1C281C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EAAF0A89-DE5E-4C6D-A39E-2D6941F5B7A3} = {BE2A8E56-E78E-4121-9C9D-92CF1F1B1F39}
+		{74007323-14DB-4B97-87EC-4E8D4F1C5A0B} = {BE2A8E56-E78E-4121-9C9D-92CF1F1B1F39}
+		{7FE5AB92-ABA3-407E-ABEF-6407F349A3B0} = {BE2A8E56-E78E-4121-9C9D-92CF1F1B1F39}
+		{3AE3192E-77E2-416D-A357-778188EE4307} = {364E01B3-2818-4C9A-8B24-8536D8524AA8}
+		{31747045-F1B6-4CC5-B01D-37D3EC1C281C} = {364E01B3-2818-4C9A-8B24-8536D8524AA8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9505E2C8-E594-4BE5-906D-F03F2F0222B0}

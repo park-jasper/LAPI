@@ -1,11 +1,10 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 
-namespace LAPI.Domain.Contracts
+namespace LAPI.Abstractions
 {
     public interface IServer
     {
-        void Start();
         Task<Stream> AcceptClientAsync();
     }
 }
