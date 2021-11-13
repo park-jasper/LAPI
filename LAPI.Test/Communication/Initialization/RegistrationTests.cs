@@ -11,8 +11,12 @@ namespace LAPI.Test.Communication.Initialization
         {
             await Given(Streams)
                 .And(Certificates)
+                .And(NoTransportEncryption)
 
-                .When(ParallelExecutionOf(TheServerAcceptsAClient, TheClientRegistersWithTheServer))
+                .When(
+                    ParallelExecutionOf(
+                        TheServerAcceptsAClient,
+                        TheClientRegistersWithTheServer))
 
                 .Then(OnClientRegisterWasCalled)
                 .And(TheReceivedClientRegistrationGuidIsCorrect)

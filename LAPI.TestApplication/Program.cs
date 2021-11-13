@@ -7,10 +7,12 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using LAPI.Cryptography;
 using LAPI.Domain;
 using LAPI.Domain.Builder;
+using LAPI.Domain.Extensions;
 using LAPI.Domain.Model.Cryptography;
 using LAPI.ExteriorProviders.LocalNetwork;
 using LAPI.Providers.Aes;
@@ -32,47 +34,6 @@ namespace LAPI.TestApplication
 
         private static async Task FirstTest()
         {
-            var server = new TcpServer(IPAddress.Loopback, Port);
-            var presharedKey = Enumerable.Range(1, 20).Select(x => (byte) x).ToArray();
-            var serverCert = X509CertificateService.GetOwnCertificate(TestGuid, Password);
-            var clientCert = X509CertificateService.GetOwnCertificate(OtherTestGuid, Password);
-            var otpBuffer = Enumerable.Range(1, 32).Select(x => (byte) x).ToArray();
-            var otp = new AesCryptographicService(SymmetricKey.FromBuffer(otpBuffer));
-
-            var reducedServerCert = new X509Certificate2(serverCert.Export(X509ContentType.Cert));
-            var reducedClientCert = new X509Certificate2(clientCert.Export(X509ContentType.Cert));
-
-            var serverControl = Lapi.RunServer(
-                server,
-                presharedKey,
-                TestGuid,
-                serverCert,
-                () => otp,
-                ClientConnected,
-                (_, __) => { },
-                x =>
-                {
-                    if (x.Equals(OtherTestGuid))
-                    {
-                        return clientCert;
-                    }
-
-                    return null;
-                });
-            serverControl.OnError += error => Console.WriteLine($"{error.ErrorType}: {error.Message}");
-
-            var client = new TcpClient();
-            await client.ConnectAsync(IPAddress.Loopback, Port);
-
-            var stream = await Lapi.ConnectToServer(
-                client.GetStream(),
-                presharedKey,
-                OtherTestGuid,
-                TestGuid,
-                clientCert,
-                serverCert);
-
-            Console.WriteLine($"Successful connected: {stream.Successful}");
             //Console.WriteLine("Attempting to read from server");
 
             //byte[] buf = new byte[4];
@@ -90,9 +51,6 @@ namespace LAPI.TestApplication
             //{
             //    Console.WriteLine($"Found servers on network: {string.Join(", ", guidsResult.Result)}");
             //}
-
-            Console.ReadLine();
-            serverControl.StopServer();
         }
 
         private static async Task SecondTest()
@@ -118,6 +76,36 @@ namespace LAPI.TestApplication
                 .WithSslEncryption(clientCert)
                 .WithAesOtpCryptography(() => otpKey)
                 .BuildClient();
+
+         
+            var serverControl = server.RunServer(
+                serverCert,
+                ClientConnected,
+                (_, __) => { },
+                _ => clientCert);
+            serverControl.OnError += error => Console.WriteLine($"{error.ErrorType}: {error.Message}");
+
+            var tcpClient = new TcpClient();
+            await tcpClient.ConnectAsync(IPAddress.Loopback, Port);
+
+            var result = await client.ConnectToServerAsync(
+                tcpClient.GetStream(),
+                TestGuid,
+                serverCert);
+
+            Console.WriteLine($"Successful connected: {result.Successful}");
+            var stream = result.Result;
+            var payload = await stream.ReadSafelyAsync(4, CancellationToken.None);
+
+            Console.WriteLine($"Receive successful: {payload.Successful}");
+            if (payload.Successful)
+            {
+                Console.WriteLine($"Received {string.Join(", ", payload.Result)}");
+            }
+
+            stream.Close();
+            stream.Dispose();
+            serverControl.StopServer();
         }
 
         private static void ClientConnected(Guid guid, AuthenticatedStream str)
@@ -126,6 +114,7 @@ namespace LAPI.TestApplication
             var payload = new byte[] { 1, 2, 3, 4 };
             str.WriteAsync(payload, 0, 4);
             str.Close();
+            str.Dispose();
         }
     }
 }

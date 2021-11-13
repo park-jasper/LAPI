@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Security.Cryptography;
 using LAPI.Abstractions.Cryptography;
-using LAPI.Domain.Contracts.Cryptography;
 using LAPI.Domain.Model.Cryptography;
 
 namespace LAPI.Providers.Aes

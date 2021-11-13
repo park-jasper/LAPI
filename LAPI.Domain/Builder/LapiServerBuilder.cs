@@ -21,11 +21,11 @@ namespace LAPI.Domain.Builder
         public LapiServer BuildServer()
         {
             return new LapiServer(
+                this.GetGuid(),
                 this.GetPresharedKey(),
                 this.CreateAuthenticatedConnectionFactory(),
                 this.CreateOtpServiceFactory(),
-                this.createServerImplementation(),
-                this.GetGuid());
+                this.createServerImplementation());
         }
     }
 }

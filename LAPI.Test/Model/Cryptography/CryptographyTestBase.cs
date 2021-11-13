@@ -1,9 +1,11 @@
 ﻿using System;
 using CSharpToolbox.UnitTesting;
 using FluentAssertions;
+using LAPI.Abstractions.Cryptography;
 using LAPI.Cryptography;
 using LAPI.Domain.Contracts.Cryptography;
 using LAPI.Domain.Model.Cryptography;
+using LAPI.Providers.Aes;
 
 namespace LAPI.Test.Model.Cryptography
 {

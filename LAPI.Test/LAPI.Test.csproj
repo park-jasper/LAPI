@@ -57,6 +57,8 @@
     <Compile Include="Communication\Initialization\RegistrationTests.cs" />
     <Compile Include="Extensions\StreamExtensions\ByteArrayResultBase.cs" />
     <Compile Include="Extensions\StreamExtensions\MalfunctioningStreamTest.cs" />
+    <Compile Include="Mocks\AuthenticatedConnectionFactoryMock.cs" />
+    <Compile Include="Mocks\AuthenticatedStreamMock.cs" />
     <Compile Include="Mocks\MalfunctioningStream.cs" />
     <Compile Include="Extensions\StreamExtensions\StreamExtensionsTestBase.cs" />
     <Compile Include="Mocks\Deque.cs" />
@@ -73,6 +75,10 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\LAPI.Abstractions\LAPI.Abstractions.csproj">
+      <Project>{8D2563FE-7675-40E1-B289-B2F6A247CF9F}</Project>
+      <Name>LAPI.Abstractions</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LAPI.Domain\LAPI.Domain.csproj">
       <Project>{f9b39e84-4d6d-4157-b187-2b567eff3c22}</Project>
       <Name>LAPI.Domain</Name>
@@ -80,6 +86,10 @@
     <ProjectReference Include="..\LAPI\LAPI.csproj">
       <Project>{3e7c3b80-745b-4739-aee8-95e793ffd1c2}</Project>
       <Name>LAPI</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Providers\LAPI.Providers.Aes\LAPI.Providers.Aes.csproj">
+      <Project>{31747045-f1b6-4cc5-b01d-37d3ec1c281c}</Project>
+      <Name>LAPI.Providers.Aes</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -90,16 +100,19 @@
       <Version>5.10.3</Version>
     </PackageReference>
     <PackageReference Include="MSTest.TestAdapter">
-      <Version>2.2.3</Version>
+      <Version>2.2.5</Version>
     </PackageReference>
     <PackageReference Include="MSTest.TestFramework">
-      <Version>2.2.3</Version>
+      <Version>2.2.5</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.1</Version>
     </PackageReference>
     <PackageReference Include="Portable.BouncyCastle">
       <Version>1.8.10</Version>
+    </PackageReference>
+    <PackageReference Include="System.Buffers">
+      <Version>4.5.1</Version>
     </PackageReference>
     <PackageReference Include="System.Collections.Immutable">
       <Version>5.0.0</Version>

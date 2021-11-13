@@ -33,12 +33,12 @@ namespace LAPI.Domain.Extensions
             this Stream stream,
             StreamWritable element,
             CancellationToken token,
-            bool recycle = true)
+            bool recycleTemporaryWriteBuffer = true)
         {
             try
             {
                 await stream.WriteAsync(element.Buffer, 0, element.ContentLength, token);
-                if (recycle)
+                if (recycleTemporaryWriteBuffer)
                 {
                     element.RecycleBuffer();
                 }
@@ -211,8 +211,7 @@ namespace LAPI.Domain.Extensions
                 this.Buffer = null;
                 this.recycleBuffer = false;
             }
-
-            private static readonly object Bottleneck = new object();
+            
             private static readonly ArrayPool<byte> BufferPool = ArrayPool<byte>.Shared;
 
             public static implicit operator StreamWritable(byte[] buffer) =>
@@ -221,7 +220,7 @@ namespace LAPI.Domain.Extensions
             public static implicit operator StreamWritable(bool logical)
             {
                 var buffer = BitConverter.GetBytes(logical);
-                return new StreamWritable(buffer, buffer.Length, true);
+                return new StreamWritable(buffer, buffer.Length, false);
             }
 
             public static implicit operator StreamWritable(int number)
@@ -241,19 +240,19 @@ namespace LAPI.Domain.Extensions
             public static implicit operator StreamWritable(float number)
             {
                 var buffer = BitConverter.GetBytes(number);
-                return new StreamWritable(buffer, buffer.Length, true);
+                return new StreamWritable(buffer, buffer.Length, false);
             }
 
             public static implicit operator StreamWritable(double number)
             {
                 var buffer = BitConverter.GetBytes(number);
-                return new StreamWritable(buffer, buffer.Length, true);
+                return new StreamWritable(buffer, buffer.Length, false);
             }
 
             public static implicit operator StreamWritable(Guid guid)
             {
                 var buffer = guid.ToByteArray();
-                return new StreamWritable(buffer, buffer.Length, true);
+                return new StreamWritable(buffer, buffer.Length, false);
             }
 
             public static implicit operator StreamWritable(string text)

@@ -13,6 +13,7 @@ namespace LAPI.Domain.Builder
         public LapiClient BuildClient()
         {
             return new LapiClient(
+                this.GetGuid(),
                 this.GetPresharedKey(),
                 this.CreateAuthenticatedConnectionFactory(),
                 this.CreateOtpServiceFactory());

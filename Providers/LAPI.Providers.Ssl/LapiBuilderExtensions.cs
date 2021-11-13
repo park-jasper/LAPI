@@ -1,5 +1,4 @@
 ﻿using System.Security.Cryptography.X509Certificates;
-using LAPI.Domain;
 using LAPI.Domain.Builder;
 
 namespace LAPI.Providers.Ssl

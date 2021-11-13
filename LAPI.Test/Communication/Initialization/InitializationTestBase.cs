@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CSharpToolbox.UnitTesting;
 using FluentAssertions;
+using LAPI.Abstractions.Cryptography;
 using LAPI.Cryptography;
 using LAPI.Domain.Contracts.Cryptography;
 using LAPI.Domain.Model.Cryptography;
@@ -23,6 +24,7 @@ namespace LAPI.Test.Communication.Initialization
         protected X509Certificate2 ClientCertificate;
         protected X509Certificate2 ServerCertificate;
 
+        protected IAuthenticatedConnectionFactory AuthenticatedConnectionFactory;
 
         protected bool OnClientRegisteredCalled;
         protected Guid ClientRegisteredGuid;
@@ -40,13 +42,18 @@ namespace LAPI.Test.Communication.Initialization
             ClientCertificate = X509CertificateService.GetOwnCertificate(OtherTestGuid, Password);
         }
 
+        protected void NoTransportEncryption()
+        {
+            this.AuthenticatedConnectionFactory = new AuthenticatedConnectionFactoryMock();
+        }
+
         protected Task TheServerAcceptsAClient()
         {
             return Domain.Communication.Initialization.HandleInitializationOfClient(
                 Client,
                 PSK,
                 TestGuid,
-                ServerCertificate,
+                AuthenticatedConnectionFactory,
                 OTP,
                 (guid, stream) =>
                 {
@@ -71,6 +78,7 @@ namespace LAPI.Test.Communication.Initialization
                 PSK,
                 OtherTestGuid,
                 TestGuid,
+                AuthenticatedConnectionFactory,
                 ClientCertificate,
                 ServerCertificate,
                 OTP,
