@@ -22,9 +22,7 @@ namespace LAPI.Test.Communication.Initialization
                 .And(TheReceivedClientRegistrationGuidIsCorrect)
                 .And(TheReceivedClientRegistrationCertificateIsCorrect)
                 .And(OnClientConnectedWasCalled)
-                .And(TheReceivedClientConnectionGuidIsCorrect)
-                .And(TheStreamsShouldBeMutuallyAuthenticated);
-
+                .And(TheReceivedClientConnectionGuidIsCorrect);
         }
     }
 }
