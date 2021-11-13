@@ -22,10 +22,17 @@ namespace LAPI.Test.Mocks
                 if (_currentTaskSource != null)
                 {
                     var requestBuffer = _currentRequestBufferQueue.Dequeue();
-                    var minLength = Math.Min(Math.Min(count, buffer.Length), requestBuffer.Length);
+                    var minBufferLength = Math.Min(count, buffer.Length);
+                    var minLength = Math.Min(minBufferLength, requestBuffer.Length);
                     Array.Copy(buffer, requestBuffer, minLength);
                     _currentTaskSource.SetResult(minLength);
                     _currentTaskSource = null;
+                    if (minBufferLength > requestBuffer.Length)
+                    {
+                        var remainingBuffer = new byte[minBufferLength - requestBuffer.Length];
+                        Array.Copy(buffer, minLength, remainingBuffer, 0, minBufferLength - requestBuffer.Length);
+                        _currentBufferQueue.Enqueue(remainingBuffer);
+                    }
                 }
                 else
                 {
